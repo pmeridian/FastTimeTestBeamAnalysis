@@ -2,10 +2,10 @@ SHELL         = bash
 BASEDIR       = $(shell pwd)
 H4DQMSRCDIR   = ../H4DQM/src
 SRCDIR        = src
-EXEDIR        = test
+TESTDIR        = test
 LIBDIR        = lib
 BINDIR        = bin
-LIBRARY       = libFastTimeTestBeamAnalysis
+LIBNAME       = FastTimeTestBeamAnalysis
 
 SRCFILES=$(wildcard $(SRCDIR)/*.cc)
 OBJFILES=$(patsubst %.cc,%.o,$(SRCFILES)) 
@@ -15,11 +15,12 @@ OBJFILES += $(H4DQMSRCDIR)/Waveform.o   $(H4DQMSRCDIR)/WaveformFit.o   $(H4DQMSR
 USERINCLUDES += -I$(BASEDIR) -I../H4DQM
 EXTERNALLIBS = `root-config --glibs` -lMathCore -lMathMore -lz -lm 
 CXX          = g++
-CXXFLAGS     = -c -g -Wall `root-config --cflags` -fPIC -O2 -ggdb -std=gnu++0x 
+CXXFLAGS     = -g -Wall `root-config --cflags` -fPIC -O2 -ggdb -std=gnu++0x 
 CXXFLAGS    += $(USERINCLUDES)
 
 all: info clean prepare $(OBJFILES) 
-	$(CXX) -shared -fPIC -o $(LIBDIR)/$(LIBRARY).so $(SRCDIR)/*.o $(H4DQMSRCDIR)/*.o $(EXTERNALLIBS)
+	$(CXX) -shared -fPIC -o $(LIBDIR)/lib$(LIBNAME).so $(SRCDIR)/*.o $(H4DQMSRCDIR)/*.o $(EXTERNALLIBS)
+	$(CXX) -o $(BINDIR)/RunH4treeReco $(CXXFLAGS) $(TESTDIR)/RunH4treeReco.cpp $(EXTERNALLIBS) -L$(BASEDIR)/$(LIBDIR) -l$(LIBNAME)
 
 info:
 	@echo "--------------------------"
@@ -30,7 +31,7 @@ info:
 clean:
 	$(shell	rm $(SRCDIR)/*.o)
 	$(shell	rm $(H4DQMSRCDIR)/*.o)
-	$(shell	rm $(LIBDIR)/*.o)
+	$(shell	rm $(LIBDIR)/*.so)
 	$(shell	rm $(BINDIR)/*)
 
 prepare:
@@ -45,13 +46,6 @@ obj:
 obj/%.o : %.cc
 	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
-
-#gcc -o libfoo.so module1.o module2.o -shared
-#$(LIBOBJS): $(LIBCPP)
-#	$(CXX) $(CXXFLAGS) -c $(LIBCPP) -o $(LIBOBJS)
-
-#$(LIBRARY): $(LIBOBJS)
-#	ar -cr $(LIBRARY) $(LIBOBJS)
 
 
 
