@@ -1,6 +1,7 @@
 #include "interface/H4treeReco.h"
 #include "interface/WaveformUtils.hpp"
 #include "interface/WaveformFit.hpp"
+#include "interface/Waveform.hpp"
 
 H4treeReco::H4treeReco(TTree *tree) : H4tree(tree)
 {
@@ -13,11 +14,13 @@ H4treeReco::H4treeReco(TTree *tree) : H4tree(tree)
   recoT_->Branch("nEvtTimes",    &nEvtTimes,    "nEvtTimes/i");
 
   //add more variables relevant for the study
-
 }
 
 void H4treeReco::Loop()
 {
+  Waveform *waveform;
+  std::map <int, Waveform *> digi_waveforms;
+
   if (fChain == 0) return;
   
   Long64_t nentries = fChain->GetEntriesFast();
@@ -28,10 +31,12 @@ void H4treeReco::Loop()
 
     //save x/y coordinates from the wire chambers
     //https://github.com/cmsromadaq/H4DQM/blob/master/src/plotterTools.cpp#L1296
-
+    
     //loop over the relevant channels and reconstruct the waveforms
     //https://github.com/cmsromadaq/H4DQM/blob/master/src/plotterTools.cpp#L1785
-    //store the relevant information: pedestal, amplitude, time, etc.
+           
+	
+     //store the relevant information: pedestal, amplitude, time, etc.
     //optional:
     //save pulse, pedestal subtracted and aligned using trigger time?
 
