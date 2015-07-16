@@ -7,7 +7,8 @@ class H4treeReco : public H4tree
 {
 
  public:
-  H4treeReco();
+  H4treeReco(TTree *);
+  void Loop(); 
   ~H4treeReco();
   
  private:
