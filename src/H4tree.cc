@@ -1,5 +1,5 @@
-#define H4tree_cxx
 #include "interface/H4tree.h"
+
 #include <TH2.h>
 #include <TStyle.h>
 #include <TCanvas.h>
@@ -31,7 +31,7 @@ void H4tree::Loop()
 //by  b_branchname->GetEntry(ientry); //read only this branch
    if (fChain == 0) return;
 
-   Long64_t nentries = fChain->GetEntriesFast();
+   Long64_t nentries = fChain->GetEntries();
 
    Long64_t nbytes = 0, nb = 0;
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
@@ -42,7 +42,7 @@ void H4tree::Loop()
    }
 }
 
-H4tree::H4tree(TTree *tree) : fChain(0) 
+H4tree::H4tree(TChain *tree) : fChain(0) 
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
@@ -82,7 +82,7 @@ Long64_t H4tree::LoadTree(Long64_t entry)
    return centry;
 }
 
-void H4tree::Init(TTree *tree)
+void H4tree::Init(TChain *tree)
 {
    // The Init() function is called when the selector needs to initialize
    // a new tree or chain. Typically here the branch addresses and branch
