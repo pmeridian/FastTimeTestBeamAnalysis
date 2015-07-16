@@ -5,10 +5,14 @@
 
 class H4treeReco : public H4tree
 {
-public:
+
+ public:
   H4treeReco();
   ~H4treeReco();
-private:
+  
+ private:
+  
+  TTree *recoT_;
 };
 
 #endif
