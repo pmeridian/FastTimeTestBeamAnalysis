@@ -3,17 +3,21 @@
 
 #include "interface/H4tree.h"
 
+#include "TFile.h"
+#include "TString.h"
+
 class H4treeReco : public H4tree
 {
 
  public:
-  H4treeReco(TTree *);
+  H4treeReco(TTree *,TString outUrl="H4treeRecoOut.root");
   void Loop(); 
   ~H4treeReco();
   
  private:
   
   TTree *recoT_;
+  TFile *fOut_;
 };
 
 #endif

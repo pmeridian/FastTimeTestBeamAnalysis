@@ -9,6 +9,7 @@ git clone https://github.com/cmsromadaq/H4DQM.git
 git clone https://github.com/PFCal-dev/FastTimeTestBeamAnalysis.git
 cd FastTimeTestBeamAnalysis
 make
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:`pwd`/lib
 ```
 A shared library will be produced under FastTimeTestBeamAnalysis/lib 
 containing the relevant functions for the reconstruction using H4DQM utils.

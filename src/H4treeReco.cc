@@ -3,18 +3,25 @@
 #include "interface/WaveformFit.hpp"
 #include "interface/Waveform.hpp"
 
-H4treeReco::H4treeReco(TTree *tree) : H4tree(tree)
+#include <iostream>
+
+H4treeReco::H4treeReco(TTree *tree,TString outUrl) : H4tree(tree)
 {
+  fOut_=TFile::Open(outUrl,"RECREATE");
   recoT_ = new TTree("H4treeReco","H4treeReco");
+  recoT_->SetDirectory(fOut_);
   recoT_->Branch("runNumber",    &runNumber,    "runNumber/i");
   recoT_->Branch("spillNumber",  &spillNumber,  "spillNumber/i");
   recoT_->Branch("evtNumber",    &evtNumber,    "evtNumber/i");
   recoT_->Branch("evtTimeDist",  &evtTimeDist,  "evtTimeDist/i");
   recoT_->Branch("evtTimeStart", &evtTimeStart, "evtTimeStart/i");
   recoT_->Branch("nEvtTimes",    &nEvtTimes,    "nEvtTimes/i");
-
+  
   //add more variables relevant for the study
 }
+
+
+
 
 void H4treeReco::Loop()
 {
@@ -25,8 +32,6 @@ void H4treeReco::Loop()
   
   Long64_t nentries = fChain->GetEntriesFast();
   for (Long64_t jentry=0; jentry<nentries;jentry++) {
-    Long64_t ientry = LoadTree(jentry);
-    if (ientry < 0) break;
     fChain->GetEntry(jentry); 
 
     //save x/y coordinates from the wire chambers
@@ -40,11 +45,14 @@ void H4treeReco::Loop()
     //optional:
     //save pulse, pedestal subtracted and aligned using trigger time?
 
-    recoT_->Write();
+    recoT_->Fill();
   }
 }
 
 
 H4treeReco::~H4treeReco()
 {
+  fOut_->cd();
+  recoT_->Write();
+  fOut_->Close();
 }
