@@ -12,12 +12,15 @@ processes locally or submits to batch the RECO step for a ROOT file or a directo
 """
 def main():
 
+    #tag production with current hash from git
+    githash=commands.getstatusoutput('git describe --always')[1]
+
     # configure
     usage = 'usage: %prog [options]'
     parser = optparse.OptionParser(usage)
     parser.add_option('-o', '--output',     dest='output' , 
                       help='Output directory (local or eos) [default=%default]', 
-                      default='/store/cmst3/group/hgcal/TimingTB_H2_Jul2015/RECO/v0/')
+                      default='/store/cmst3/group/hgcal/TimingTB_H2_Jul2015/RECO/%s/' % githash)
     parser.add_option('-i', '--input',      dest='input',   
                       help='Input directory or file (local or eos) [default=%default]',
                       default='/store/group/dpg_ecal/alca_ecalcalib/TimingTB_H2_Jul2015/raw/DataTree/3351')
