@@ -53,7 +53,6 @@ void H4treeReco::InitDigi()
   groupsAndChannels_.insert( std::pair<Int_t,Int_t>(0,3) ); //Si Pad #1
   groupsAndChannels_.insert( std::pair<Int_t,Int_t>(0,4) ); //Si Pad #2
   groupsAndChannels_.insert( std::pair<Int_t,Int_t>(1,8) ); //Trigger
-  maxch_=groupsAndChannels.size();
   
   for(std::set< std::pair<Int_t,Int_t> >::iterator key=groupsAndChannels_.begin();
       key!=groupsAndChannels_.end();
@@ -85,14 +84,15 @@ void H4treeReco::FillWaveforms()
 	  }
 
 	//reconstruct waveforms
-	for (std::map<TString,VarPlot*>::iterator it=varplots_.begin();it!=varplots_.end();++it)
+	maxch_=0;
+	for (std::map<TString,VarPlot*>::iterator it=varplots_.begin();it!=varplots_.end();++it,++maxch_)
 	{
 		// Extract waveform information:
        		Waveform::baseline_informations wave_pedestal;
 	       	Waveform::max_amplitude_informations wave_max;
        
 		wave_pedestal= waveform->baseline(5,44); //use 40 samples between 5-44 to get pedestal and RMS
-
+		pedestal_[chCtr]=wave_pedestal;
 
 		//substract a fixed value from the samples
 		waveform->offset(wave_pedestal.pedestal);
@@ -109,11 +109,13 @@ void H4treeReco::FillWaveforms()
 			else   // stay with negative signals
 				waveform->rescale(-1);
 		}
+		wave_max_[chCtr]=wave_max;
+		
 
-		double charge_integration = waveform->charge_integrated(0,900);// pedestal already subtracted 
-		double t_max              = wave_max.time_at_max*1.e9;
-		double t_max_frac30       = waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.3,wave_max,7)*1.e9;
-		double t_max_frac50       = waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.5,wave_max,7)*1.e9;
+		charge_integration_[chCtr] = waveform->charge_integrated(0,900);// pedestal already subtracted 
+		t_max_[chCtr]              = wave_max.time_at_max*1.e9;
+		t_max_frac30_[chCtr]       = waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.3,wave_max,7)*1.e9;
+		t_max_frac50_[chCtr]       = waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.5,wave_max,7)*1.e9;
 	}
 }
 
@@ -121,8 +123,6 @@ void H4treeReco::FillWaveforms()
 //
 void H4treeReco::Loop()
 {
-  Waveform *waveform;
-
   if (fChain == 0) return;
   
   Long64_t nentries = fChain->GetEntries();
@@ -146,7 +146,6 @@ void H4treeReco::Loop()
       //https://github.com/cmsromadaq/H4DQM/blob/master/src/plotterTools.cpp#L1785
       FillWaveForms();
 	
-      //store the relevant information: pedestal, amplitude, time, etc.
       //optional:
       //save pulse, pedestal subtracted and aligned using trigger time?
       
