@@ -12,12 +12,15 @@ processes locally or submits to batch the RECO step for a ROOT file or a directo
 """
 def main():
 
+    #tag production with current hash from git
+    githash=commands.getstatusoutput('git describe --always')[1]
+
     # configure
     usage = 'usage: %prog [options]'
     parser = optparse.OptionParser(usage)
     parser.add_option('-o', '--output',     dest='output' , 
                       help='Output directory (local or eos) [default=%default]', 
-                      default='/store/cmst3/group/hgcal/TimingTB_H2_Jul2015/RECO/v0/')
+                      default='/store/cmst3/group/hgcal/TimingTB_H2_Jul2015/RECO/%s/' % githash)
     parser.add_option('-i', '--input',      dest='input',   
                       help='Input directory or file (local or eos) [default=%default]',
                       default='/store/group/dpg_ecal/alca_ecalcalib/TimingTB_H2_Jul2015/raw/DataTree/3351')
@@ -32,7 +35,7 @@ def main():
     #build list of input files
     fileList=[]
     if opt.input.endswith('.root'):
-        fileList.append(opt.input)
+        fileList=[opt.input]
     else:
         listCmd='ls %s | grep -ir .root' % opt.input
         if '/store/' in opt.input:
@@ -40,14 +43,18 @@ def main():
         fileList=commands.getstatusoutput(listCmd)[1].split()
 
     #build list of tasks
-    tasks=[]
+    inputUrl=''
     for f in fileList :
         if '/store/' in f and not EOSPREFIX in f:  f='%s/%s' % (EOSPREFIX,f)
-        localOutputPrefix=''
-        baseInputDir=os.path.dirname(f)
-        localOutputPrefix='' if len(baseInputDir)==0 else os.path.basename( os.path.dirname(f) )+'_'
-        localOutput='RECO_%s%s' % ( localOutputPrefix,os.path.basename(f) )
-        tasks.append( (f,localOutput) )
+        inputUrl += f +','
+    inputUrl=inputUrl[:-1]
+
+    #local output
+    localOutputPrefix=''
+    baseInputDir=os.path.dirname(f)
+    localOutputPrefix=''       if len(baseInputDir)==0 else os.path.basename(os.path.dirname(f))
+    localOutputPostfix='.root' if len(fileList)>0      else '_'+os.path.basename(fileList[0])
+    localOutput='RECO_%s%s' % ( localOutputPrefix,localOutputPostfix )
 
     #prepare output
     prepareCmd = 'cmsMkdir' if '/store/' in opt.output else 'mkdir -p'
@@ -55,18 +62,19 @@ def main():
     stageCmd   = 'cmsStage' if '/store/' in opt.output else 'cp'
         
     #run or submit tasks
-    for inputUrl, localOutput in tasks:
-        if opt.queue=='local':
-            os.system('cd %s && export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:%s/lib && ./bin/RunH4treeReco %s %s && %s %s %s && rm %s && cd -' 
-                      % (opt.base,
-                         opt.base,
-                         inputUrl,localOutput,
-                         stageCmd,localOutput,opt.output,
-                         localOutput)
-                      )
-        else:
-            scriptRealPath=os.path.realpath(sys.argv[0])
-            os.system('bsub -q %s %s -o %s -i %s --base %s -q local'%(opt.queue,scriptRealPath,opt.output,inputUrl,opt.base))
+    if opt.queue=='local':
+        os.system('cd %s && export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:%s/lib && ./bin/RunH4treeReco %s %s && %s %s %s && rm %s && cd -' 
+                  % (opt.base,
+                     opt.base,
+                     inputUrl,localOutput,
+                     stageCmd,localOutput,opt.output,
+                     localOutput)
+                  )
+    else:
+        scriptRealPath=os.path.realpath(sys.argv[0])
+        os.system('bsub -q %s %s -o %s -i %s --base %s -q local'%(opt.queue,scriptRealPath,opt.output,inputUrl,opt.base))
+        
+    return 0
 
 
 if __name__ == '__main__':
