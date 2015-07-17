@@ -61,61 +61,51 @@ void H4treeReco::InitDigi()
 //
 void H4treeReco::FillWaveforms()
 {
-  /*
-  //Add reconstruction of waveforms
-  for (std::map<TString,varPlot<float>*>::iterator it=varplots.begin();it!=varplots.end();++it)
-    {
-      if (!(it->second->waveform)) continue;
-      
-      Waveform::baseline_informations wave_pedestal;
-      Waveform::max_amplitude_informations wave_max;
-      
-      wave_pedestal=it->second->waveform->baseline(5,44); //use 40 samples between 5-44 to get pedestal and RMS
-      it->second->waveform->offset(wave_pedestal.pedestal);
-      
-      it->second->waveform->rescale(-1); 
-      wave_max=it->second->waveform->max_amplitude(50,900,5); //find max amplitude between 50 and 900 samples
-      if (wave_max.max_amplitude<20)
+	
+	//fill waveforms
+	char name[100];
+	for (uint iSample = 0 ; iSample < nDigiSamples ; ++iSample)
+	  {
+	  	std::pair<Int_t,Int_t> key(digiGroup[iSample],digiChannel[iSample]);
+	  	if(groupsAndChannels_.find(key)==groupsAndChannels_.end()) continue;
+	        if(digiChannel[iSample]>=nActiveDigitizerChannels_) continue;
+      		sprintf(name,"digi_ch%02d",iGroup*8+iChannel);
+		varplots_[name]->Fill2D(digiSampleIndex[iSample], digiSampleValue[iSample],1.);
+	    	varplots_[name]->waveform->addTimeAndSample(digiSampleIndex[iSample]*0.2,digiSampleValue[iSample]);
+	  }
+
+	//reconstruct waveforms
+	for (std::map<TString,VarPlot*>::iterator it=varplots_.begin();it!=varplots_.end();++it)
 	{
-	  //try not inverting if signal is positive
-	  it->second->waveform->rescale(-1); 
-	  Waveform::max_amplitude_informations wave_max_inv=it->second->waveform->max_amplitude(50,900,5); //find max amplitude between 50 and 900 samples
-	  if (wave_max_inv.max_amplitude>wave_max.max_amplitude)
-	    wave_max=wave_max_inv;
-	  else //stay with negative signals
-	    it->second->waveform->rescale(-1); 
+		// Extract waveform information:
+       		Waveform::baseline_informations wave_pedestal;
+	       	Waveform::max_amplitude_informations wave_max;
+       
+		wave_pedestal= waveform->baseline(5,44); //use 40 samples between 5-44 to get pedestal and RMS
+
+
+		//substract a fixed value from the samples
+		waveform->offset(wave_pedestal.pedestal);
+
+		//rescale all the samples by a given rescale factor, i.e. invert the signal
+		waveform->rescale(-1); 
+		wave_max=waveform->max_amplitude(50,900,5); //find max amplitude between 50 and 900 samples
+		if(wave_max.max_amplitude<20)
+		{
+			waveform->rescale(-1);	
+			Waveform::max_amplitude_informations wave_max_inv = waveform->max_amplitude(50,900,5);
+			if(wave_max_inv.max_amplitude > wave_max.max_amplitude)
+				wave_max = wave_max_inv;
+			else   // stay with negative signals
+				waveform->rescale(-1);
+		}
+
+		double charge_integration = waveform->charge_integrated(0,900);// pedestal already subtracted 
+		double t_max              = wave_max.time_at_max*1.e9;
+		double t_max_frac30       = waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.3,wave_max,7)*1.e9;
+		double t_max_frac50       = waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.5,wave_max,7)*1.e9;
 	}
-      
-      TString thisname = it->second->name.ReplaceAll("_pulse","");
-      varplots[Form("%s_pedestal",thisname.Data())]->Fill(wave_pedestal.pedestal,1.);
-      varplots[Form("%s_pedestal_rms",thisname.Data())]->Fill(wave_pedestal.rms,1.);
-      varplots[Form("%s_max_amplitude",thisname.Data())]->Fill(wave_max.max_amplitude,1.);
-      varplots[Form("%s_charge_integrated",thisname.Data())]->Fill(it->second->waveform->charge_integrated(0,900),1.); // pedestal already subtracted
-      varplots[Form("%s_time_at_max",thisname.Data())]->Fill(wave_max.time_at_max*1.e9,1.);
-      varplots[Form("%s_time_at_frac30",thisname.Data())]->Fill(it->second->waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.3,wave_max,7)*1.e9,1.);
-      varplots[Form("%s_time_at_frac50",thisname.Data())]->Fill(it->second->waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.5,wave_max,7)*1.e9,1.);
-      
-      int x1 = -1;
-      for(int i=0;i<64;i++){
-	if(fibersOn_[hodoX1][i]==1 && x1==-1) x1 = i;
-	if(fibersOn_[hodoX1][i]==1 && x1!=-1) { x1 = -1; break; }
-      }
-      int y1 = -1;
-      for(int i=0;i<64;i++){
-	if(fibersOn_[hodoY1][i]==1 && y1==-1) y1 = i;
-	if(fibersOn_[hodoY1][i]==1 && y1!=-1) { y1 = -1; break; }
-      }
-      int x2 = -1;
-      for(int i=0;i<64;i++){
-	if(fibersOn_[hodoX2][i]==1 && x2==-1) x2 = i;
-	if(fibersOn_[hodoX2][i]==1 && x2!=-1) { x2 = -1; break; }
-      }
-      int y2 = -1;
-      for(int i=0;i<64;i++){
-	if(fibersOn_[hodoY2][i]==1 && y2==-1) y2 = i;
-	if(fibersOn_[hodoY2][i]==1 && y2!=-1) { y2 = -1; break; }
-      }
-      
+/*
       varplots[Form("%s_charge_integrated_vs_hodoX1",thisname.Data())]->Fill(x1,it->second->waveform->charge_integrated(0,900)); // pedestal already subtracted
       varplots[Form("%s_charge_integrated_vs_hodoY1",thisname.Data())]->Fill(y1,it->second->waveform->charge_integrated(0,900)); // pedestal already subtracted
       varplots[Form("%s_charge_integrated_vs_hodoX2",thisname.Data())]->Fill(x2,it->second->waveform->charge_integrated(0,900)); // pedestal already subtracted
@@ -160,38 +150,7 @@ void H4treeReco::Loop()
       
       //loop over the relevant channels and reconstruct the waveforms
       //https://github.com/cmsromadaq/H4DQM/blob/master/src/plotterTools.cpp#L1785
-      
-      // Construct the waveform
-	for(int iSample=0; iSample< nDigiSamples; ++iSample){
-	      	//waveform->addTimeAndSample(fChain->digiSampleIndex[iSample]*timeSampleUnit(fChain->digiFrequency[iSample]),fChain->digiSampleValue[iSample]);
-	      	waveform->addTimeAndSample(digiSampleIndex[iSample]*0.2,digiSampleValue[iSample]);
-	}
-	// Extract waveform information:
-       	Waveform::baseline_informations wave_pedestal;
-       	Waveform::max_amplitude_informations wave_max;
-       
-	wave_pedestal= waveform->baseline(5,44); //use 40 samples between 5-44 to get pedestal and RMS
-
-
-	//substract a fixed value from the samples
-	waveform->offset(wave_pedestal.pedestal);
-
-	//rescale all the samples by a given rescale factor, i.e. invert the signal
-	waveform->rescale(-1); 
-	wave_max=waveform->max_amplitude(50,900,5); //find max amplitude between 50 and 900 samples
-	if(wave_max.max_amplitude<20){
-		waveform->rescale(-1);	
-		Waveform::max_amplitude_informations wave_max_inv = waveform->max_amplitude(50,900,5);
-		if(wave_max_inv.max_amplitude > wave_max.max_amplitude)
-			wave_max = wave_max_inv;
-		else   // stay with negative signals
-			waveform->rescale(-1);
-	}
-
-	double charge_integration = waveform->charge_integrated(0,900);// pedestal already subtracted 
-	double t_max              = wave_max.time_at_max*1.e9;
-	double t_max_frac30       = waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.3,wave_max,7)*1.e9;
-	double t_max_frac50       = waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.5,wave_max,7)*1.e9;
+      FillWaveForms();
 	
       //store the relevant information: pedestal, amplitude, time, etc.
       //optional:
