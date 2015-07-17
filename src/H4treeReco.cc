@@ -34,6 +34,15 @@ H4treeReco::H4treeReco(TChain *tree,TString outUrl) :
   recoT_->Branch("tdc_recoy", &tdc_recoy_, "tdc_recoy/F");
   
   //add more variables relevant for the study
+  recoT_->Branch("maxch", &maxch_, "maxch/i");
+  recoT_->Branch("group", group_,  "group[maxch]/F");
+  recoT_->Branch("ch",    ch_,     "ch[maxch]/F");
+  recoT_->Branch("pedestal",    pedestal_,     "pedestal[maxch]/F");
+  recoT_->Branch("wave_max",    wave_max_,     "wave_max[maxch]/F");
+  recoT_->Branch("charge_integration",    charge_integration_,     "charge_integration[maxch]/F");
+  recoT_->Branch("t_max",           t_max_,     	"t_max[maxch]/F");
+  recoT_->Branch("t_max_frac30",    t_max_frac30_,     	"t_max_frac30[maxch]/F");
+  recoT_->Branch("t_max_frac50",    t_max_frac50_,     	"t_max_frac50[maxch]/F");
 }
 
 //
@@ -44,7 +53,8 @@ void H4treeReco::InitDigi()
   groupsAndChannels_.insert( std::pair<Int_t,Int_t>(0,3) ); //Si Pad #1
   groupsAndChannels_.insert( std::pair<Int_t,Int_t>(0,4) ); //Si Pad #2
   groupsAndChannels_.insert( std::pair<Int_t,Int_t>(1,8) ); //Trigger
-
+  maxch_=groupsAndChannels.size();
+  
   for(std::set< std::pair<Int_t,Int_t> >::iterator key=groupsAndChannels_.begin();
       key!=groupsAndChannels_.end();
       ++key)
@@ -105,22 +115,6 @@ void H4treeReco::FillWaveforms()
 		double t_max_frac30       = waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.3,wave_max,7)*1.e9;
 		double t_max_frac50       = waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.5,wave_max,7)*1.e9;
 	}
-/*
-      varplots[Form("%s_charge_integrated_vs_hodoX1",thisname.Data())]->Fill(x1,it->second->waveform->charge_integrated(0,900)); // pedestal already subtracted
-      varplots[Form("%s_charge_integrated_vs_hodoY1",thisname.Data())]->Fill(y1,it->second->waveform->charge_integrated(0,900)); // pedestal already subtracted
-      varplots[Form("%s_charge_integrated_vs_hodoX2",thisname.Data())]->Fill(x2,it->second->waveform->charge_integrated(0,900)); // pedestal already subtracted
-      varplots[Form("%s_charge_integrated_vs_hodoY2",thisname.Data())]->Fill(y2,it->second->waveform->charge_integrated(0,900)); // pedestal already subtracted
-      
-      
-      int x = getDigiChannelX(it->second->name);
-      int y = getDigiChannelY(it->second->name);
-      varplots["allCh_charge_integrated_map"]->Fill2D(x,y,it->second->waveform->charge_integrated(0,900)); // pedestal already subtracted	
-      varplots["allCh_max_amplitude_map"]->Fill2D(x,y,wave_max.max_amplitude); // pedestal already subtracted
-      varplots["allCh_pedestal_map"]->Fill2D(x,y,wave_pedestal.pedestal); // pedestal already subtracted
-      varplots["allCh_pedestal_rms_map"]->Fill2D(x,y,wave_pedestal.rms); // pedestal already subtracted
-      sum_amplitudes+=wave_max.max_amplitude;
-    }
-  */
 }
 
 
