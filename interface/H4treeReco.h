@@ -10,7 +10,7 @@ class H4treeReco : public H4tree
 {
 
  public:
-  H4treeReco(TTree *,TString outUrl="H4treeRecoOut.root");
+  H4treeReco(TChain *,TString outUrl="H4treeRecoOut.root");
   void Loop(); 
   ~H4treeReco();
   
