@@ -43,6 +43,8 @@ H4treeReco::H4treeReco(TChain *tree,TString outUrl) :
   recoT_->Branch("t_max",           t_max_,     	"t_max[maxch]/F");
   recoT_->Branch("t_max_frac30",    t_max_frac30_,     	"t_max_frac30[maxch]/F");
   recoT_->Branch("t_max_frac50",    t_max_frac50_,     	"t_max_frac50[maxch]/F");
+
+  InitDigi();
 }
 
 //
@@ -62,8 +64,15 @@ void H4treeReco::InitDigi()
       if(iChannel>=nActiveDigitizerChannels_) continue;
 	  
       char name[100];
+      int iThisEntry=0;
+      int iHistEntry=0;
       sprintf(name,"digi_ch%02d",iGroup*8+iChannel);
+      varplots_[name] = new VarPlot(&iThisEntry,&iHistEntry,kPlot2D);
       varplots_[name]->waveform = new Waveform();
+      varplots_[name]->SetName(name);
+      varplots_[name]->doPlot   =false;
+      varplots_[name]->SetGM(iGroup,iChannel);
+
     }
 }
 
@@ -78,21 +87,23 @@ void H4treeReco::FillWaveforms()
 	  	std::pair<Int_t,Int_t> key(digiGroup[iSample],digiChannel[iSample]);
 	  	if(groupsAndChannels_.find(key)==groupsAndChannels_.end()) continue;
 	        if(digiChannel[iSample]>=nActiveDigitizerChannels_) continue;
-      		sprintf(name,"digi_ch%02d",iGroup*8+iChannel);
-		varplots_[name]->Fill2D(digiSampleIndex[iSample], digiSampleValue[iSample],1.);
+      		sprintf(name,"digi_ch%02d",key.first*8 +key.second);
+		//varplots_[name]->Fill2D(digiSampleIndex[iSample], digiSampleValue[iSample],1.);
 	    	varplots_[name]->waveform->addTimeAndSample(digiSampleIndex[iSample]*0.2,digiSampleValue[iSample]);
 	  }
 
+	Waveform * waveform;
 	//reconstruct waveforms
 	maxch_=0;
 	for (std::map<TString,VarPlot*>::iterator it=varplots_.begin();it!=varplots_.end();++it,++maxch_)
 	{
 		// Extract waveform information:
+		waveform = it->second->waveform ;
        		Waveform::baseline_informations wave_pedestal;
 	       	Waveform::max_amplitude_informations wave_max;
        
 		wave_pedestal= waveform->baseline(5,44); //use 40 samples between 5-44 to get pedestal and RMS
-		pedestal_[chCtr]=wave_pedestal;
+		pedestal_[maxch_]=wave_pedestal.pedestal;
 
 		//substract a fixed value from the samples
 		waveform->offset(wave_pedestal.pedestal);
@@ -109,13 +120,13 @@ void H4treeReco::FillWaveforms()
 			else   // stay with negative signals
 				waveform->rescale(-1);
 		}
-		wave_max_[chCtr]=wave_max;
+		wave_max_[maxch_]=wave_max.max_amplitude;
 		
 
-		charge_integration_[chCtr] = waveform->charge_integrated(0,900);// pedestal already subtracted 
-		t_max_[chCtr]              = wave_max.time_at_max*1.e9;
-		t_max_frac30_[chCtr]       = waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.3,wave_max,7)*1.e9;
-		t_max_frac50_[chCtr]       = waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.5,wave_max,7)*1.e9;
+		charge_integration_[maxch_] = waveform->charge_integrated(0,900);// pedestal already subtracted 
+		t_max_[maxch_]              = wave_max.time_at_max*1.e9;
+		t_max_frac30_[maxch_]       = waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.3,wave_max,7)*1.e9;
+		t_max_frac50_[maxch_]       = waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.5,wave_max,7)*1.e9;
 	}
 }
 
@@ -144,7 +155,7 @@ void H4treeReco::Loop()
       
       //loop over the relevant channels and reconstruct the waveforms
       //https://github.com/cmsromadaq/H4DQM/blob/master/src/plotterTools.cpp#L1785
-      FillWaveForms();
+      FillWaveforms();
 	
       //optional:
       //save pulse, pedestal subtracted and aligned using trigger time?
