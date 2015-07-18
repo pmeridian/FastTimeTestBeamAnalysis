@@ -15,6 +15,8 @@ def main():
     #tag production with current hash from git
     githash=commands.getstatusoutput('git describe --always')[1]
 
+    recoSWdir=os.path.dirname(os.path.dirname(os.path.realpath(sys.argv[0])))
+
     # configure
     usage = 'usage: %prog [options]'
     parser = optparse.OptionParser(usage)
@@ -24,9 +26,12 @@ def main():
     parser.add_option('-i', '--input',      dest='input',   
                       help='Input directory or file (local or eos) [default=%default]',
                       default='/store/group/dpg_ecal/alca_ecalcalib/TimingTB_H2_Jul2015/raw/DataTree/3351')
+    parser.add_option('-c', '--cfg',      dest='cfg',   
+                      help='Configuration file for reconstructin [default=%default]',
+                      default='%s/test/reco_cfg.json' % recoSWdir)
     parser.add_option('--base',      dest='base',
                       help='Directory with RECO software installation [default=%default]',
-                      default=os.path.dirname(os.path.dirname(os.path.realpath(sys.argv[0]))))
+                      default=recoSWdir)
     parser.add_option('-q', '--queue',      dest='queue', 
                       help='Batch queue [default=%default]',
                       default='local')
@@ -63,16 +68,16 @@ def main():
         
     #run or submit tasks
     if opt.queue=='local':
-        os.system('cd %s && export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:%s/lib && ./bin/RunH4treeReco %s %s && %s %s %s && rm %s && cd -' 
+        os.system('cd %s && export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:%s/lib && ./bin/RunH4treeReco %s %s %s %s && %s %s && rm %s && cd -' 
                   % (opt.base,
                      opt.base,
-                     inputUrl,localOutput,
+                     inputUrl,opt.cfg,localOutput,
                      stageCmd,localOutput,opt.output,
                      localOutput)
                   )
     else:
         scriptRealPath=os.path.realpath(sys.argv[0])
-        os.system('bsub -q %s %s -o %s -i %s --base %s -q local'%(opt.queue,scriptRealPath,opt.output,inputUrl,opt.base))
+        os.system('bsub -q %s %s -o %s -i %s --base %s -c %s -q local'%(opt.queue,scriptRealPath,opt.output,inputUrl,opt.cfg,opt.base))
         
     return 0
 

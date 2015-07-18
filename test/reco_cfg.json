@@ -1,5 +1,5 @@
 {
-"digis":
+"digis":[
 	{
 		"name":"MPC",
 		"group":0,
@@ -29,15 +29,6 @@
 		"cfdWindowUp":2,
 		"cfdWindowLo":-2,
 		"fixedThrForTiming":10
-	},
-	{
-		"name":"Trigger",
-		"group":0,
-		"channel":8,
-		"maxWindowUp":50,
-		"maxWindowLo":900,
-		"cfdWindowUp":2,
-		"cfdWindowLo":-2,
-		"fixedThrForTiming":10
 	}
+	]
 }

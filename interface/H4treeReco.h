@@ -3,6 +3,7 @@
 
 #include "interface/H4tree.h"
 #include "interface/ChannelPlot.h"
+#include "interface/JSONWrapper.h"
 
 #include "TFile.h"
 #include "TString.h"
@@ -13,7 +14,7 @@ class H4treeReco : public H4tree
 {
 
  public:
-  H4treeReco(TChain *,TString outUrl="H4treeRecoOut.root");
+  H4treeReco(TChain *,JSONWrapper::Object *cfg,TString outUrl="H4treeRecoOut.root");
   void Loop(); 
   void FillTDC();
   void FillWaveforms();
@@ -21,10 +22,9 @@ class H4treeReco : public H4tree
   
  private:
 
-  void InitDigi();
+  void InitDigi(JSONWrapper::Object *cfg);
 
   typedef std::pair<UInt_t,UInt_t>         GroupChannelKey_t;
-  std::set<GroupChannelKey_t>              groupsAndChannels_;
   std::map<GroupChannelKey_t,ChannelPlot*> chPlots_;
 
   //TDC readings
@@ -42,6 +42,7 @@ class H4treeReco : public H4tree
   Float_t t_max_[100],            t_max_frac30_[100],       t_max_frac50_[100];
 
   TTree *recoT_;
+  TH1F *groupNamesH_, *channelNamesH_;
   TFile *fOut_;
 };
 

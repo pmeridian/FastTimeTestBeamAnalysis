@@ -6,7 +6,7 @@
 #include <iostream>
 
 //
-H4treeReco::H4treeReco(TChain *tree,TString outUrl) : 
+H4treeReco::H4treeReco(TChain *tree,JSONWrapper::Object *cfg,TString outUrl) : 
   H4tree(tree),
   wcXl_(4),   //TDC Xleft
   wcXr_(5),   //TDC Xright
@@ -46,30 +46,34 @@ H4treeReco::H4treeReco(TChain *tree,TString outUrl) :
   recoT_->Branch("t_max_frac30",         t_max_frac30_,        "t_max_frac30[maxch]/F");
   recoT_->Branch("t_max_frac50",         t_max_frac50_,        "t_max_frac50[maxch]/F");
 
-  InitDigi();
+  InitDigi(cfg);
 }
 
 //
-void H4treeReco::InitDigi()
+void H4treeReco::InitDigi(JSONWrapper::Object *cfg)
 {
   //init channels of interest
-  groupsAndChannels_.insert( std::pair<Int_t,Int_t>(0,0) ); //MPC
-  groupsAndChannels_.insert( std::pair<Int_t,Int_t>(0,3) ); //Si Pad #1
-  groupsAndChannels_.insert( std::pair<Int_t,Int_t>(0,4) ); //Si Pad #2
-  groupsAndChannels_.insert( std::pair<Int_t,Int_t>(0,8) ); //Trigger
-  
-  for(std::set< GroupChannelKey_t >::iterator key=groupsAndChannels_.begin();
-      key!=groupsAndChannels_.end();
-      ++key)
+  std::vector<JSONWrapper::Object> digis=(*cfg)["digis"].daughters();
+  std::cout << "[H4treeReco::InitDigi] preparing analysis for " << digis.size() << " channels" << std::endl;
+  groupNamesH_   = new TH1F("Groups",";;Group;"  ,digis.size(),0,digis.size());
+  channelNamesH_ = new TH1F("Channels",";;Channel;",digis.size(),0,digis.size());
+  for(size_t i=0; i<digis.size(); i++)
     {
-      UInt_t iGroup(key->first),iChannel(key->second);
-      if(iChannel>=nActiveDigitizerChannels_) continue;
+      TString iname = digis[i]["name"].toString();
+      UInt_t igr    = digis[i]["group"].toInt();
+      UInt_t ich    = digis[i]["channel"].toInt();
+      std::cout << "\t " << iname << " will be reconstructed from group=" << igr << " channel=" << ich << std::endl;
+
+      //add a ChannelPlot class for the reconstruction
+      GroupChannelKey_t key(igr,ich);
+      chPlots_[key] = new ChannelPlot(igr,ich,ChannelPlot::kNull, false,false);
+      chPlots_[key]->SetWaveform( new Waveform() );
+      chPlots_[key]->SetName(iname);
       
-      char name[100];
-      sprintf(name,"digi_ch%02d",iGroup*8+iChannel);
-      chPlots_[*key] = new ChannelPlot(iGroup,iChannel,ChannelPlot::kNull, false,false);
-      chPlots_[*key]->SetWaveform( new Waveform() );
-      chPlots_[*key]->SetName(name);
+      groupNamesH_->SetBinContent(i+1,igr);
+      groupNamesH_->GetXaxis()->SetBinLabel(i+1,iname);
+      channelNamesH_->SetBinContent(i+1,ich);
+      channelNamesH_->GetXaxis()->SetBinLabel(i+1,iname);
     }
 }
 
@@ -81,7 +85,7 @@ void H4treeReco::FillWaveforms()
   for (uint iSample = 0 ; iSample < nDigiSamples ; ++iSample)
     {
       GroupChannelKey_t key(digiGroup[iSample],digiChannel[iSample]);
-      if(groupsAndChannels_.find(key)==groupsAndChannels_.end()) continue;
+      if(chPlots_.find(key)==chPlots_.end()) continue;
       if(digiChannel[iSample]>=nActiveDigitizerChannels_) continue;
       chPlots_[key]->GetWaveform()->addTimeAndSample(digiSampleIndex[iSample]*0.2,digiSampleValue[iSample]);
     }
@@ -187,5 +191,7 @@ H4treeReco::~H4treeReco()
 {
   fOut_->cd();
   recoT_->Write();
+  groupNamesH_->Write();
+  channelNamesH_->Write();
   fOut_->Close();
 }
