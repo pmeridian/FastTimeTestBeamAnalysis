@@ -1,0 +1,43 @@
+{
+"digis":
+	{
+		"name":"MPC",
+		"group":0,
+		"channel":0,
+		"maxWindowUp":50,
+		"maxWindowLo":900,
+		"cfdWindowUp":2,
+		"cfdWindowLo":-2,
+		"fixedThrForTiming":10
+	},
+	{
+		"name":"SiPad1",
+		"group":0,
+		"channel":3,
+		"maxWindowUp":50,
+		"maxWindowLo":900,
+		"cfdWindowUp":2,
+		"cfdWindowLo":-2,
+		"fixedThrForTiming":10
+	},
+	{
+		"name":"SiPad2",
+		"group":0,
+		"channel":4,
+		"maxWindowUp":50,
+		"maxWindowLo":900,
+		"cfdWindowUp":2,
+		"cfdWindowLo":-2,
+		"fixedThrForTiming":10
+	},
+	{
+		"name":"Trigger",
+		"group":0,
+		"channel":8,
+		"maxWindowUp":50,
+		"maxWindowLo":900,
+		"cfdWindowUp":2,
+		"cfdWindowLo":-2,
+		"fixedThrForTiming":10
+	}
+}
