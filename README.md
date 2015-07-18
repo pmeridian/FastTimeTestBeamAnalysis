@@ -32,6 +32,7 @@ python scripts/runH4treeReco.py -i /store/group/dpg_ecal/alca_ecalcalib/TimingTB
 ```
 submits the processing of all root files in the input directory to a lxbatch queue.
 The output directory can be specified with -o.
+The cfg to be used for reco can be specified with -c.
 
 ## Analysis scripts
 
