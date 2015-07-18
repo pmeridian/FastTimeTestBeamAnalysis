@@ -33,16 +33,18 @@ H4treeReco::H4treeReco(TChain *tree,TString outUrl) :
   recoT_->Branch("tdc_recox", &tdc_recox_, "tdc_recox/F");
   recoT_->Branch("tdc_recoy", &tdc_recoy_, "tdc_recoy/F");
   
-  //add more variables relevant for the study
-  recoT_->Branch("maxch", &maxch_, "maxch/i");
-  recoT_->Branch("group", group_,  "group[maxch]/F");
-  recoT_->Branch("ch",    ch_,     "ch[maxch]/F");
-  recoT_->Branch("pedestal",    pedestal_,     "pedestal[maxch]/F");
-  recoT_->Branch("wave_max",    wave_max_,     "wave_max[maxch]/F");
-  recoT_->Branch("charge_integration",    charge_integration_,     "charge_integration[maxch]/F");
-  recoT_->Branch("t_max",           t_max_,     	"t_max[maxch]/F");
-  recoT_->Branch("t_max_frac30",    t_max_frac30_,     	"t_max_frac30[maxch]/F");
-  recoT_->Branch("t_max_frac50",    t_max_frac50_,     	"t_max_frac50[maxch]/F");
+  //digitizer channel info
+  recoT_->Branch("maxch",               &maxch_,               "maxch/i");
+  recoT_->Branch("group",                group_,               "group[maxch]/F");
+  recoT_->Branch("ch",                   ch_,                  "ch[maxch]/F");
+  recoT_->Branch("pedestal",             pedestal_,            "pedestal[maxch]/F");
+  recoT_->Branch("pedestalRMS",          pedestalRMS_,         "pedestalRMS[maxch]/F");
+  recoT_->Branch("wave_max",             wave_max_,            "wave_max[maxch]/F");
+  recoT_->Branch("charge_integ",         charge_integ_,        "charge_integ[maxch]/F");
+  recoT_->Branch("charge_integ_max",     charge_integ_max_,    "charge_integ_max[maxch]/F");
+  recoT_->Branch("t_max",                t_max_,     	       "t_max[maxch]/F");
+  recoT_->Branch("t_max_frac30",         t_max_frac30_,        "t_max_frac30[maxch]/F");
+  recoT_->Branch("t_max_frac50",         t_max_frac50_,        "t_max_frac50[maxch]/F");
 
   InitDigi();
 }
@@ -54,25 +56,20 @@ void H4treeReco::InitDigi()
   groupsAndChannels_.insert( std::pair<Int_t,Int_t>(0,0) ); //MPC
   groupsAndChannels_.insert( std::pair<Int_t,Int_t>(0,3) ); //Si Pad #1
   groupsAndChannels_.insert( std::pair<Int_t,Int_t>(0,4) ); //Si Pad #2
-  groupsAndChannels_.insert( std::pair<Int_t,Int_t>(1,8) ); //Trigger
+  groupsAndChannels_.insert( std::pair<Int_t,Int_t>(0,8) ); //Trigger
   
-  for(std::set< std::pair<Int_t,Int_t> >::iterator key=groupsAndChannels_.begin();
+  for(std::set< GroupChannelKey_t >::iterator key=groupsAndChannels_.begin();
       key!=groupsAndChannels_.end();
       ++key)
     {
-      Int_t iGroup(key->first),iChannel(key->second);
+      UInt_t iGroup(key->first),iChannel(key->second);
       if(iChannel>=nActiveDigitizerChannels_) continue;
-	  
+      
       char name[100];
-      int iThisEntry=0;
-      int iHistEntry=0;
       sprintf(name,"digi_ch%02d",iGroup*8+iChannel);
-      varplots_[name] = new VarPlot(&iThisEntry,&iHistEntry,kPlot2D);
-      varplots_[name]->waveform = new Waveform();
-      varplots_[name]->SetName(name);
-      varplots_[name]->doPlot   =false;
-      varplots_[name]->SetGM(iGroup,iChannel);
-
+      chPlots_[*key] = new ChannelPlot(iGroup,iChannel,ChannelPlot::kNull, false,false);
+      chPlots_[*key]->SetWaveform( new Waveform() );
+      chPlots_[*key]->SetName(name);
     }
 }
 
@@ -80,54 +77,47 @@ void H4treeReco::InitDigi()
 void H4treeReco::FillWaveforms()
 {
 	
-	//fill waveforms
-	char name[100];
-	for (uint iSample = 0 ; iSample < nDigiSamples ; ++iSample)
-	  {
-	  	std::pair<Int_t,Int_t> key(digiGroup[iSample],digiChannel[iSample]);
-	  	if(groupsAndChannels_.find(key)==groupsAndChannels_.end()) continue;
-	        if(digiChannel[iSample]>=nActiveDigitizerChannels_) continue;
-      		sprintf(name,"digi_ch%02d",key.first*8 +key.second);
-		//varplots_[name]->Fill2D(digiSampleIndex[iSample], digiSampleValue[iSample],1.);
-	    	varplots_[name]->waveform->addTimeAndSample(digiSampleIndex[iSample]*0.2,digiSampleValue[iSample]);
-	  }
+  //fill waveforms
+  for (uint iSample = 0 ; iSample < nDigiSamples ; ++iSample)
+    {
+      GroupChannelKey_t key(digiGroup[iSample],digiChannel[iSample]);
+      if(groupsAndChannels_.find(key)==groupsAndChannels_.end()) continue;
+      if(digiChannel[iSample]>=nActiveDigitizerChannels_) continue;
+      chPlots_[key]->GetWaveform()->addTimeAndSample(digiSampleIndex[iSample]*0.2,digiSampleValue[iSample]);
+    }
 
-	Waveform * waveform;
-	//reconstruct waveforms
-	maxch_=0;
-	for (std::map<TString,VarPlot*>::iterator it=varplots_.begin();it!=varplots_.end();++it,++maxch_)
-	{
-		// Extract waveform information:
-		waveform = it->second->waveform ;
-       		Waveform::baseline_informations wave_pedestal;
-	       	Waveform::max_amplitude_informations wave_max;
+  //reconstruct waveforms
+  Waveform * waveform;
+  maxch_=0;
+  for (std::map<GroupChannelKey_t,ChannelPlot*>::iterator it=chPlots_.begin();it!=chPlots_.end();++it,++maxch_)
+    {
+      // Extract waveform information:
+      waveform = it->second->GetWaveform() ;
        
-		wave_pedestal= waveform->baseline(5,44); //use 40 samples between 5-44 to get pedestal and RMS
-		pedestal_[maxch_]=wave_pedestal.pedestal;
-
-		//substract a fixed value from the samples
-		waveform->offset(wave_pedestal.pedestal);
-
-		//rescale all the samples by a given rescale factor, i.e. invert the signal
-		waveform->rescale(-1); 
-		wave_max=waveform->max_amplitude(50,900,5); //find max amplitude between 50 and 900 samples
-		if(wave_max.max_amplitude<20)
-		{
-			waveform->rescale(-1);	
-			Waveform::max_amplitude_informations wave_max_inv = waveform->max_amplitude(50,900,5);
-			if(wave_max_inv.max_amplitude > wave_max.max_amplitude)
-				wave_max = wave_max_inv;
-			else   // stay with negative signals
-				waveform->rescale(-1);
-		}
-		wave_max_[maxch_]=wave_max.max_amplitude;
-		
-
-		charge_integration_[maxch_] = waveform->charge_integrated(0,900);// pedestal already subtracted 
-		t_max_[maxch_]              = wave_max.time_at_max*1.e9;
-		t_max_frac30_[maxch_]       = waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.3,wave_max,7)*1.e9;
-		t_max_frac50_[maxch_]       = waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.5,wave_max,7)*1.e9;
-	}
+      //use 40 samples between 5-44 to get pedestal and RMS
+      Waveform::baseline_informations wave_pedestal= waveform->baseline(5,44); 
+      
+      //substract the pedestal from the samples
+      waveform->offset(wave_pedestal.pedestal);
+      
+      //if pedestal is very high, the signal is negative -> invert it
+      if(wave_pedestal.pedestal>2100) waveform->rescale(-1);	
+      
+      //find max amplitude between 50 and 900 samples
+      Waveform::max_amplitude_informations wave_max=waveform->max_amplitude(50,900,5); 
+ 
+      //fill information for the reco tree
+      group_[maxch_]              = it->first.first;
+      ch_[maxch_]                 = it->first.second;
+      pedestal_[maxch_]           = wave_pedestal.pedestal;
+      pedestalRMS_[maxch_]        = wave_pedestal.rms;
+      wave_max_[maxch_]           = wave_max.max_amplitude;
+      charge_integ_[maxch_]       = waveform->charge_integrated(0,900);
+      charge_integ_max_[maxch_]   = waveform->charge_integrated(wave_max.time_at_max-1.3e-8,wave_max.time_at_max);
+      t_max_[maxch_]              = wave_max.time_at_max*1.e9;
+      t_max_frac30_[maxch_]       = waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.3,wave_max,7)*1.e9;
+      t_max_frac50_[maxch_]       = waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.5,wave_max,7)*1.e9;
+    }
 }
 
 
