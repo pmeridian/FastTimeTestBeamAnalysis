@@ -11,3 +11,7 @@ LSFJOB*
 # no python init file
 python/__init__.py
 *.root
+# no object, shared lib or exe
+*.o
+*.so
+*.exe
