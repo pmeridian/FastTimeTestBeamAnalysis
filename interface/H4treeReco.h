@@ -32,8 +32,7 @@ class H4treeReco : public H4tree
     else if (drs4Freq == 1)
       return 0.4E-9;
     else if (drs4Freq == 2)
-      return 1.E-9;
-    
+      return 1.E-9;    
     return -999.;
   }
 
@@ -50,7 +49,7 @@ class H4treeReco : public H4tree
   UInt_t maxch_;
   Float_t group_[100],ch_[100];
   Float_t pedestal_[100],         pedestalRMS_[100];
-  Float_t wave_max_[100];
+  Float_t wave_max_[100], waveform_aroundmax_[100][25];
   Float_t charge_integ_max_[100], charge_integ_max30_[100], charge_integ_max50_[100], charge_integ_[100];
   Float_t t_max_[100],            t_max_frac30_[100],       t_max_frac50_[100];
 

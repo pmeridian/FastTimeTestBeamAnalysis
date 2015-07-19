@@ -35,10 +35,12 @@ public:
   Int_t GetThrForPulseInversion()                             { return thrForPulseInversion_; }
   Int_t GetPedestalWindowLo()                                 { return pedestalWindowLo_; }
   Int_t GetPedestalWindowUp()                                 { return pedestalWindowUp_; }
-  Int_t GetMaxWindowUp()                                      { return maxWindowUp_; }
-  Int_t GetMaxWindowLo()                                      { return maxWindowLo_; }  
+  Int_t GetSearchWindowUp()                                   { return searchWindowUp_; }
+  Int_t GetSearchWindowLo()                                   { return searchWindowLo_; }  
   Int_t GetCFDWindowLo()                                      { return cfdWindowLo_; }
   Float_t GetFixedThrForTiming()                              { return fixedThrForTiming_; }
+  Int_t GetSpyWindowLo()                                   { return spyWindowLo_; }
+  Int_t GetSpyWindowUp()                                   { return spyWindowUp_; }
   Waveform *GetWaveform()                                     { return waveform_; }
   TH1F *GetConfigSummary()                                    { return chRecoCfgH_; }
   void SetWaveform(Waveform *w)                               { waveform_=w; }
@@ -49,7 +51,7 @@ public:
 
  private:
   
-  Int_t group_, module_,maxWindowUp_,maxWindowLo_;
+  Int_t group_, module_,searchWindowUp_,searchWindowLo_,spyWindowLo_,spyWindowUp_;
   Float_t cfdWindowLo_;
   Int_t thrForPulseInversion_,pedestalWindowLo_,pedestalWindowUp_;
   Float_t fixedThrForTiming_;

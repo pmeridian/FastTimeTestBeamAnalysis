@@ -7,8 +7,10 @@
 		"thrForPulseInversion":2100,
 		"pedestalWindowLo":5,
 		"pedestalWindowUp":44,
-		"maxWindowLo":50,
-		"maxWindowUp":900,
+		"searchWindowLo":50,
+		"searchWindowUp":900,
+		"spyWindowLo":-2,
+		"spyWindowUp":10,
 		"cfdWindowLo":3e-8,
 		"fixedThrForTiming":10
 	},
@@ -19,8 +21,10 @@
 		"thrForPulseInversion":2100,
 		"pedestalWindowLo":5,
 		"pedestalWindowUp":44,
-		"maxWindowLo":50,
-		"maxWindowUp":900,
+		"searchWindowLo":50,
+		"searchWindowUp":900,
+		"spyWindowLo":-2,
+		"spyWindowUp":10,
 		"cfdWindowLo":3e-8,
 		"fixedThrForTiming":10
 	},
@@ -31,8 +35,10 @@
 		"thrForPulseInversion":2100,
 		"pedestalWindowLo":5,
 		"pedestalWindowUp":44,
-		"maxWindowLo":50,
-		"maxWindowUp":900,
+		"searchWindowLo":50,
+		"searchWindowUp":900,
+		"spyWindowLo":-2,
+		"spyWindowUp":10,
 		"cfdWindowLo":3e-8,
 		"fixedThrForTiming":10
 	}

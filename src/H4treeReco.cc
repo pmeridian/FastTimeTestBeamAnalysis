@@ -68,7 +68,13 @@ void H4treeReco::InitDigi()
 //
 void H4treeReco::FillWaveforms()
 {
-	
+  //first reset waveforms
+  for (std::map<GroupChannelKey_t,ChannelReco*>::iterator it=chPlots_.begin();it!=chPlots_.end();++it,++maxch_)
+    {
+      it->second->ClearVectors();
+      it->second->GetWaveform()->clear();
+    }
+
   //fill waveforms
   for (uint iSample = 0 ; iSample < nDigiSamples ; ++iSample)
     {
@@ -91,15 +97,16 @@ void H4treeReco::FillWaveforms()
       //use 40 samples between 5-44 to get pedestal and RMS
       Waveform::baseline_informations wave_pedestal= waveform->baseline(chRec->GetPedestalWindowLo(),
 									chRec->GetPedestalWindowUp()); 
+
       //substract the pedestal from the samples
       waveform->offset(wave_pedestal.pedestal);
       
       //if pedestal is very high, the signal is negative -> invert it
       if(wave_pedestal.pedestal>chRec->GetThrForPulseInversion()) waveform->rescale(-1);	
       
-      //find max amplitude between 50 and 900 samples
-      Waveform::max_amplitude_informations wave_max=waveform->max_amplitude(chRec->GetMaxWindowLo(),
-									    chRec->GetMaxWindowUp(),
+      //find max amplitude in search window
+      Waveform::max_amplitude_informations wave_max=waveform->max_amplitude(chRec->GetSearchWindowLo(),
+									    chRec->GetSearchWindowUp(),
 									    5); 
 
       //fill information for the reco tree
@@ -108,14 +115,25 @@ void H4treeReco::FillWaveforms()
       pedestal_[maxch_]           = wave_pedestal.pedestal;
       pedestalRMS_[maxch_]        = wave_pedestal.rms;
       wave_max_[maxch_]           = wave_max.max_amplitude;
+      t_max_[maxch_]              = wave_max.time_at_max*1.e9;
+      for(int i=chRec->GetSpyWindowLo(); i<=chRec->GetSpyWindowUp(); i++)
+	{
+	  int idx2store=i-chRec->GetSpyWindowLo();
+	  int idx=wave_max.sample_at_max+i;
+	  float val(0);
+	  if(idx>=0 && idx<waveform->_samples.size()) val=waveform->_samples[idx];
+	  waveform_aroundmax_[maxch_][idx2store]=val;
+	}
+
       charge_integ_[maxch_]       = waveform->charge_integrated(0,900);
       charge_integ_max_[maxch_]   = waveform->charge_integrated(wave_max.time_at_max-chRec->GetCFDWindowLo(),
 								wave_max.time_at_max);
-      t_max_[maxch_]              = wave_max.time_at_max*1.e9;
+
       t_max_frac30_[maxch_]       = waveform->time_at_frac(wave_max.time_at_max-chRec->GetCFDWindowLo(),
 							   wave_max.time_at_max,0.3,wave_max,7)*1.e9;
       t_max_frac50_[maxch_]       = waveform->time_at_frac(wave_max.time_at_max-chRec->GetCFDWindowLo(),
 							   wave_max.time_at_max,0.5,wave_max,7)*1.e9;
+
     }
 }
 
