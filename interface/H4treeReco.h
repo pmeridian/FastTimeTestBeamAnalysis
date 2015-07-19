@@ -25,6 +25,18 @@ class H4treeReco : public H4tree
   JSONWrapper::Object *cfg_;
   void InitDigi();
   
+  inline float timeSampleUnit(int drs4Freq)
+  {
+    if (drs4Freq == 0)
+      return 0.2E-9;
+    else if (drs4Freq == 1)
+      return 0.4E-9;
+    else if (drs4Freq == 2)
+      return 1.E-9;
+    
+    return -999.;
+  }
+
   typedef std::pair<UInt_t,UInt_t>         GroupChannelKey_t;
   std::map<GroupChannelKey_t,ChannelReco*> chPlots_;
 

@@ -75,7 +75,8 @@ void H4treeReco::FillWaveforms()
       GroupChannelKey_t key(digiGroup[iSample],digiChannel[iSample]);
       if(chPlots_.find(key)==chPlots_.end()) continue;
       if(digiChannel[iSample]>=nActiveDigitizerChannels_) continue;
-      chPlots_[key]->GetWaveform()->addTimeAndSample(digiSampleIndex[iSample]*0.2,digiSampleValue[iSample]);
+      chPlots_[key]->GetWaveform()->addTimeAndSample(digiSampleIndex[iSample]*timeSampleUnit(digiFrequency[iSample]),
+						     digiSampleValue[iSample]);
     }
 
   //reconstruct waveforms
@@ -142,7 +143,6 @@ void H4treeReco::Loop()
       FillTDC();      
       
       //loop over the relevant channels and reconstruct the waveforms
-      //https://github.com/cmsromadaq/H4DQM/blob/master/src/plotterTools.cpp#L1785
       FillWaveforms();
 	
       //optional:
