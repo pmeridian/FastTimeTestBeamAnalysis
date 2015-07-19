@@ -58,7 +58,7 @@ def main():
     localOutputPrefix=''
     baseInputDir=os.path.dirname(f)
     localOutputPrefix=''       if len(baseInputDir)==0 else os.path.basename(os.path.dirname(f))
-    localOutputPostfix='.root' if len(fileList)>0      else '_'+os.path.basename(fileList[0])
+    localOutputPostfix='.root' if len(fileList)>1      else '_'+os.path.basename(fileList[0])
     localOutput='RECO_%s%s' % ( localOutputPrefix,localOutputPostfix )
 
     #prepare output
@@ -68,7 +68,7 @@ def main():
         
     #run or submit tasks
     if opt.queue=='local':
-        os.system('cd %s && export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:%s/lib && ./bin/RunH4treeReco %s %s %s %s && %s %s && rm %s && cd -' 
+        os.system('cd %s && export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:%s/lib && ./bin/RunH4treeReco %s %s %s && %s %s %s && rm %s && cd -' 
                   % (opt.base,
                      opt.base,
                      inputUrl,opt.cfg,localOutput,
