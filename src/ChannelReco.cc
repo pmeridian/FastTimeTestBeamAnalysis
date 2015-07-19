@@ -17,7 +17,7 @@ ChannelReco::ChannelReco(JSONWrapper::Object &cfg, PlotType ptype, Bool_t doPlot
   spyWindowUp_       = cfg["spyWindowUp"].toInt();
   spyWindowLo_       = cfg["spyWindowLo"].toInt();
   cfdWindowLo_       = cfg["cfdWindowLo"].toDouble();
-  fixedThrForTiming_ = cfg["fixedThrForTiming"].toDouble();
+  thrForTiming_ = cfg["thrForTiming"].toDouble();
   pedestalWindowLo_   = cfg["pedestalWindowLo"].toInt();
   pedestalWindowUp_   = cfg["pedestalWindowUp"].toInt();
   thrForPulseInversion_ = cfg["thrForPulseInversion"].toInt();
@@ -30,12 +30,12 @@ ChannelReco::ChannelReco(JSONWrapper::Object &cfg, PlotType ptype, Bool_t doPlot
   chRecoCfgH_->SetBinContent(3,searchWindowUp_);         chRecoCfgH_->GetXaxis()->SetBinLabel(3,"searchWindowUp");
   chRecoCfgH_->SetBinContent(4,searchWindowLo_);         chRecoCfgH_->GetXaxis()->SetBinLabel(4,"searchWindowLo");
   chRecoCfgH_->SetBinContent(5,cfdWindowLo_);            chRecoCfgH_->GetXaxis()->SetBinLabel(5,"cfdWindowLo");
-  chRecoCfgH_->SetBinContent(6,fixedThrForTiming_);      chRecoCfgH_->GetXaxis()->SetBinLabel(6,"fixedThrForTiming");
+  chRecoCfgH_->SetBinContent(6,thrForTiming_);           chRecoCfgH_->GetXaxis()->SetBinLabel(6,"thrForTiming");
   chRecoCfgH_->SetBinContent(7,pedestalWindowLo_);       chRecoCfgH_->GetXaxis()->SetBinLabel(7,"pedestalWindowLo");
   chRecoCfgH_->SetBinContent(8,pedestalWindowUp_);       chRecoCfgH_->GetXaxis()->SetBinLabel(8,"pedestalWindowUp");
   chRecoCfgH_->SetBinContent(9,thrForPulseInversion_);   chRecoCfgH_->GetXaxis()->SetBinLabel(9,"thrForPulseInversion");
-  chRecoCfgH_->SetBinContent(10,spyWindowUp_);        chRecoCfgH_->GetXaxis()->SetBinLabel(10,"spyWindowUp");
-  chRecoCfgH_->SetBinContent(11,spyWindowLo_);        chRecoCfgH_->GetXaxis()->SetBinLabel(11,"spyWindowLo");
+  chRecoCfgH_->SetBinContent(10,spyWindowUp_);           chRecoCfgH_->GetXaxis()->SetBinLabel(10,"spyWindowUp");
+  chRecoCfgH_->SetBinContent(11,spyWindowLo_);           chRecoCfgH_->GetXaxis()->SetBinLabel(11,"spyWindowLo");
 
   std::cout << "\t " << name_ << " will be reconstructed from group=" << group_ << " channel=" << module_ << std::endl;
 }

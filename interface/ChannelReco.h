@@ -38,9 +38,9 @@ public:
   Int_t GetSearchWindowUp()                                   { return searchWindowUp_; }
   Int_t GetSearchWindowLo()                                   { return searchWindowLo_; }  
   Int_t GetCFDWindowLo()                                      { return cfdWindowLo_; }
-  Float_t GetFixedThrForTiming()                              { return fixedThrForTiming_; }
-  Int_t GetSpyWindowLo()                                   { return spyWindowLo_; }
-  Int_t GetSpyWindowUp()                                   { return spyWindowUp_; }
+  Float_t GetThrForTiming()                                   { return thrForTiming_; }
+  Int_t GetSpyWindowLo()                                      { return spyWindowLo_; }
+  Int_t GetSpyWindowUp()                                      { return spyWindowUp_; }
   Waveform *GetWaveform()                                     { return waveform_; }
   TH1F *GetConfigSummary()                                    { return chRecoCfgH_; }
   void SetWaveform(Waveform *w)                               { waveform_=w; }
@@ -54,7 +54,7 @@ public:
   Int_t group_, module_,searchWindowUp_,searchWindowLo_,spyWindowLo_,spyWindowUp_;
   Float_t cfdWindowLo_;
   Int_t thrForPulseInversion_,pedestalWindowLo_,pedestalWindowUp_;
-  Float_t fixedThrForTiming_;
+  Float_t thrForTiming_;
   int ptype_;
   bool doPlot_, doProfile_;
   TString name_;

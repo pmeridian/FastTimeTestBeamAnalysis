@@ -6,13 +6,13 @@
 		"channel":0,
 		"thrForPulseInversion":2100,
 		"pedestalWindowLo":5,
-		"pedestalWindowUp":44,
-		"searchWindowLo":50,
-		"searchWindowUp":900,
-		"spyWindowLo":-2,
+		"pedestalWindowUp":45,
+		"searchWindowLo":100,
+		"searchWindowUp":400,
+		"spyWindowLo":-10,
 		"spyWindowUp":10,
-		"cfdWindowLo":3e-8,
-		"fixedThrForTiming":10
+		"cfdWindowLo":5e-9,
+		"thrForTiming":10
 	},
 	{
 		"name":"SiPad1",
@@ -20,13 +20,13 @@
 		"channel":3,
 		"thrForPulseInversion":2100,
 		"pedestalWindowLo":5,
-		"pedestalWindowUp":44,
-		"searchWindowLo":50,
-		"searchWindowUp":900,
-		"spyWindowLo":-2,
+		"pedestalWindowUp":45,
+		"searchWindowLo":100,
+		"searchWindowUp":400,
+		"spyWindowLo":-10,
 		"spyWindowUp":10,
-		"cfdWindowLo":3e-8,
-		"fixedThrForTiming":10
+		"cfdWindowLo":5e-9,
+		"thrForTiming":10
 	},
 	{
 		"name":"SiPad2",
@@ -34,13 +34,13 @@
 		"channel":4,
 		"thrForPulseInversion":2100,
 		"pedestalWindowLo":5,
-		"pedestalWindowUp":44,
-		"searchWindowLo":50,
-		"searchWindowUp":900,
-		"spyWindowLo":-2,
+		"pedestalWindowUp":45,
+		"searchWindowLo":100,
+		"searchWindowUp":400,
+		"spyWindowLo":-10,
 		"spyWindowUp":10,
-		"cfdWindowLo":3e-8,
-		"fixedThrForTiming":10
+		"cfdWindowLo":5e-9,
+		"thrForTiming":10
 	}
 	]
 }

@@ -47,6 +47,7 @@ H4treeReco::H4treeReco(TChain *tree,JSONWrapper::Object *cfg,TString outUrl) :
   recoT_->Branch("t_max",                t_max_,     	       "t_max[maxch]/F");
   recoT_->Branch("t_max_frac30",         t_max_frac30_,        "t_max_frac30[maxch]/F");
   recoT_->Branch("t_max_frac50",         t_max_frac50_,        "t_max_frac50[maxch]/F");
+  recoT_->Branch("t_at_threshold",       t_at_threshold_,      "t_at_threshold[maxch]/F");
 
   InitDigi();
 }
@@ -89,13 +90,13 @@ void H4treeReco::FillWaveforms()
     }
 
   //reconstruct waveforms
-  Waveform * waveform;
+
   maxch_=0;
   for (std::map<GroupChannelKey_t,ChannelReco*>::iterator it=chPlots_.begin();it!=chPlots_.end();++it,++maxch_)
     {
       // Extract waveform information:
       ChannelReco *chRec=it->second;
-      waveform = chRec->GetWaveform() ;
+      Waveform * waveform = chRec->GetWaveform() ;
        
       //use 40 samples between 5-44 to get pedestal and RMS
       Waveform::baseline_informations wave_pedestal= waveform->baseline(chRec->GetPedestalWindowLo(),
@@ -107,7 +108,7 @@ void H4treeReco::FillWaveforms()
       //if pedestal is very high, the signal is negative -> invert it
       if(wave_pedestal.pedestal>chRec->GetThrForPulseInversion()) waveform->rescale(-1);	
       
-      //find max amplitude in search window
+      //find max amplitude in search window (5 is the number of samples around max for the interpolation)
       Waveform::max_amplitude_informations wave_max=waveform->max_amplitude(chRec->GetSearchWindowLo(),
 									    chRec->GetSearchWindowUp(),
 									    5); 
@@ -121,22 +122,41 @@ void H4treeReco::FillWaveforms()
       t_max_[maxch_]              = wave_max.time_at_max*1.e9;
       for(int i=chRec->GetSpyWindowLo(); i<=chRec->GetSpyWindowUp(); i++)
 	{
-	  int idx2store=i-chRec->GetSpyWindowLo();
-	  int idx=wave_max.sample_at_max+i;
-	  float val(0);
-	  if(idx>=0 && idx<waveform->_samples.size()) val=waveform->_samples[idx];
+	  int idx2store = i-chRec->GetSpyWindowLo();
+	  int idx       = wave_max.sample_at_max+i;
+	  float val( (idx>=0 && idx<(int)waveform->_samples.size()) ? waveform->_samples[idx] : 0. );
 	  waveform_aroundmax_[maxch_][idx2store]=val;
 	}
+      
+      //charge integrated
+      charge_integ_[maxch_]       = waveform->charge_integrated(wave_max.sample_at_max-chRec->GetCFDWindowLo()/waveform->_times[1],
+								wave_max.sample_at_max+2*chRec->GetCFDWindowLo()/waveform->_times[1]);
 
-      charge_integ_[maxch_]       = waveform->charge_integrated(0,900);
-      charge_integ_max_[maxch_]   = waveform->charge_integrated(wave_max.time_at_max-chRec->GetCFDWindowLo(),
-								wave_max.time_at_max);
+      //charge integrated up to the max
+      charge_integ_max_[maxch_]   = waveform->charge_integrated(wave_max.sample_at_max-chRec->GetCFDWindowLo()/waveform->_times[1],
+								wave_max.sample_at_max);
 
-      t_max_frac30_[maxch_]       = waveform->time_at_frac(wave_max.time_at_max-chRec->GetCFDWindowLo(),
-							   wave_max.time_at_max,0.3,wave_max,7)*1.e9;
-      t_max_frac50_[maxch_]       = waveform->time_at_frac(wave_max.time_at_max-chRec->GetCFDWindowLo(),
-							   wave_max.time_at_max,0.5,wave_max,7)*1.e9;
+      //interpolates the wave form in a time range to find the time at 30% of the max
+      //7 is the number of samples to use in the interpolation
+      t_max_frac30_[maxch_]       = 1.0e9*waveform->time_at_frac(wave_max.time_at_max-chRec->GetCFDWindowLo(),
+								 wave_max.time_at_max,
+								 0.3,
+								 wave_max,
+								 7);
+      
+      //similar for 50% of the max
+      t_max_frac50_[maxch_]       = 1.0e9*waveform->time_at_frac(wave_max.time_at_max-chRec->GetCFDWindowLo(),
+								 wave_max.time_at_max,
+								 0.5,
+								 wave_max,
+								 7);
 
+      //time estimate at fixed value
+      std::vector<float> crossingTimes = waveform->time_at_threshold(wave_max.time_at_max-chRec->GetCFDWindowLo(),
+								     wave_max.time_at_max,
+								     chRec->GetThrForTiming(),
+								     5);
+      t_at_threshold_[maxch_] = 1.0e9*(crossingTimes.size()>0 ? crossingTimes[0] : -1);
     }
 }
 
