@@ -9,15 +9,15 @@
 
 #include "interface/WaveformUtils.hpp"
 #include "interface/WaveformFit.hpp"
+#include "interface/JSONWrapper.h"
 
-class ChannelPlot{
+class ChannelReco{
 
 public:
 
   enum PlotType { kNull, kPlot1D, kPlot1DProf, kPlot2D, kPlot2DProf, kPlotGraph, kPlotHistory };
 
-  ChannelPlot();
-  ChannelPlot(UInt_t group, UInt_t module, PlotType ptype, Bool_t doPlot, Bool_t doProfile);
+  ChannelReco(JSONWrapper::Object &cfg, PlotType ptype, Bool_t doPlot, Bool_t doProfile);
  
   UInt_t Size()                                               { return x_.size(); }
   std::vector<float> &GetX()                                  { return x_; }
@@ -29,26 +29,35 @@ public:
   void ClearVectors()                                         { x_.clear(); y_.clear(); }
   void SetPlot(TObject* plot)                                 { plot_=plot; }
   TObject* GetPlot()                                          { return plot_; }
-  void SetName(TString name)                                  { name_=name; }
   TString GetName()                                           { return name_; }
-  UInt_t GetGroup()                                           { return group_; }
-  UInt_t GetModule()                                          { return module_; }
-  void SetGroup(UInt_t group)                                 { group_=group; }
-  void SetModule(UInt_t module)                               { module_=module; }
+  Int_t GetGroup()                                            { return group_; }
+  Int_t GetModule()                                           { return module_; }
+  Int_t GetThrForPulseInversion()                             { return thrForPulseInversion_; }
+  Int_t GetPedestalWindowLo()                                 { return pedestalWindowLo_; }
+  Int_t GetPedestalWindowUp()                                 { return pedestalWindowUp_; }
+  Int_t GetMaxWindowUp()                                      { return maxWindowUp_; }
+  Int_t GetMaxWindowLo()                                      { return maxWindowLo_; }  
+  Int_t GetCFDWindowLo()                                      { return cfdWindowLo_; }
+  Float_t GetFixedThrForTiming()                              { return fixedThrForTiming_; }
   Waveform *GetWaveform()                                     { return waveform_; }
+  TH1F *GetConfigSummary()                                    { return chRecoCfgH_; }
   void SetWaveform(Waveform *w)                               { waveform_=w; }
   void Fill(float valX, float valY, int i=-1);
   void Fill2D(float valX, float valY, float valZ, int i);
  
-  ~ChannelPlot();
+  ~ChannelReco();
 
  private:
   
-  Int_t group_, module_;
+  Int_t group_, module_,maxWindowUp_,maxWindowLo_;
+  Float_t cfdWindowLo_;
+  Int_t thrForPulseInversion_,pedestalWindowLo_,pedestalWindowUp_;
+  Float_t fixedThrForTiming_;
   int ptype_;
   bool doPlot_, doProfile_;
   TString name_;
   std::vector<float> x_,y_,z_;
+  TH1F *chRecoCfgH_;
   TObject *plot_;
   Waveform *waveform_;
 };

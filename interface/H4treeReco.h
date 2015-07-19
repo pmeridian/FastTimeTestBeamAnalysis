@@ -2,7 +2,7 @@
 #define H4treeReco_h
 
 #include "interface/H4tree.h"
-#include "interface/ChannelPlot.h"
+#include "interface/ChannelReco.h"
 #include "interface/JSONWrapper.h"
 
 #include "TFile.h"
@@ -22,10 +22,11 @@ class H4treeReco : public H4tree
   
  private:
 
-  void InitDigi(JSONWrapper::Object *cfg);
-
+  JSONWrapper::Object *cfg_;
+  void InitDigi();
+  
   typedef std::pair<UInt_t,UInt_t>         GroupChannelKey_t;
-  std::map<GroupChannelKey_t,ChannelPlot*> chPlots_;
+  std::map<GroupChannelKey_t,ChannelReco*> chPlots_;
 
   //TDC readings
   UInt_t wcXl_, wcXr_, wcYd_, wcYu_;
@@ -42,7 +43,6 @@ class H4treeReco : public H4tree
   Float_t t_max_[100],            t_max_frac30_[100],       t_max_frac50_[100];
 
   TTree *recoT_;
-  TH1F *groupNamesH_, *channelNamesH_;
   TFile *fOut_;
 };
 

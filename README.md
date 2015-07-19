@@ -28,7 +28,7 @@ To reconstruct events in a file run
 where input is a csv list of input files and output is the name of the output file name.
 A wrapper is provided to submit jobs to the batch
 ```
-python scripts/runH4treeReco.py -i /store/group/dpg_ecal/alca_ecalcalib/TimingTB_H2_Jul2015/raw/DataTree/3351/ -q 8nh
+python scripts/runH4treeReco.py -i /store/group/dpg_ecal/alca_ecalcalib/TimingTB_H2_Jul2015/raw/DataTree/3314/ -q 8nh
 ```
 submits the processing of all root files in the input directory to a lxbatch queue.
 The output directory can be specified with -o.

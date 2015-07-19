@@ -8,6 +8,7 @@
 //
 H4treeReco::H4treeReco(TChain *tree,JSONWrapper::Object *cfg,TString outUrl) : 
   H4tree(tree),
+  cfg_(cfg),
   wcXl_(4),   //TDC Xleft
   wcXr_(5),   //TDC Xright
   wcYd_(6),   //TDC Ydown
@@ -46,34 +47,21 @@ H4treeReco::H4treeReco(TChain *tree,JSONWrapper::Object *cfg,TString outUrl) :
   recoT_->Branch("t_max_frac30",         t_max_frac30_,        "t_max_frac30[maxch]/F");
   recoT_->Branch("t_max_frac50",         t_max_frac50_,        "t_max_frac50[maxch]/F");
 
-  InitDigi(cfg);
+  InitDigi();
 }
 
 //
-void H4treeReco::InitDigi(JSONWrapper::Object *cfg)
+void H4treeReco::InitDigi()
 {
   //init channels of interest
-  std::vector<JSONWrapper::Object> digis=(*cfg)["digis"].daughters();
-  std::cout << "[H4treeReco::InitDigi] preparing analysis for " << digis.size() << " channels" << std::endl;
-  groupNamesH_   = new TH1F("Groups",";;Group;"  ,digis.size(),0,digis.size());
-  channelNamesH_ = new TH1F("Channels",";;Channel;",digis.size(),0,digis.size());
+  std::vector<JSONWrapper::Object> digis=(*cfg_)["digis"].daughters();
   for(size_t i=0; i<digis.size(); i++)
     {
-      TString iname = digis[i]["name"].toString();
-      UInt_t igr    = digis[i]["group"].toInt();
-      UInt_t ich    = digis[i]["channel"].toInt();
-      std::cout << "\t " << iname << " will be reconstructed from group=" << igr << " channel=" << ich << std::endl;
-
       //add a ChannelPlot class for the reconstruction
-      GroupChannelKey_t key(igr,ich);
-      chPlots_[key] = new ChannelPlot(igr,ich,ChannelPlot::kNull, false,false);
+      ChannelReco *chRec = new ChannelReco(digis[i],ChannelReco::kNull, false,false);
+      GroupChannelKey_t key(chRec->GetGroup(),chRec->GetModule());
+      chPlots_[key] = chRec;
       chPlots_[key]->SetWaveform( new Waveform() );
-      chPlots_[key]->SetName(iname);
-      
-      groupNamesH_->SetBinContent(i+1,igr);
-      groupNamesH_->GetXaxis()->SetBinLabel(i+1,iname);
-      channelNamesH_->SetBinContent(i+1,ich);
-      channelNamesH_->GetXaxis()->SetBinLabel(i+1,iname);
     }
 }
 
@@ -93,23 +81,26 @@ void H4treeReco::FillWaveforms()
   //reconstruct waveforms
   Waveform * waveform;
   maxch_=0;
-  for (std::map<GroupChannelKey_t,ChannelPlot*>::iterator it=chPlots_.begin();it!=chPlots_.end();++it,++maxch_)
+  for (std::map<GroupChannelKey_t,ChannelReco*>::iterator it=chPlots_.begin();it!=chPlots_.end();++it,++maxch_)
     {
       // Extract waveform information:
-      waveform = it->second->GetWaveform() ;
+      ChannelReco *chRec=it->second;
+      waveform = chRec->GetWaveform() ;
        
       //use 40 samples between 5-44 to get pedestal and RMS
-      Waveform::baseline_informations wave_pedestal= waveform->baseline(5,44); 
-      
+      Waveform::baseline_informations wave_pedestal= waveform->baseline(chRec->GetPedestalWindowLo(),
+									chRec->GetPedestalWindowUp()); 
       //substract the pedestal from the samples
       waveform->offset(wave_pedestal.pedestal);
       
       //if pedestal is very high, the signal is negative -> invert it
-      if(wave_pedestal.pedestal>2100) waveform->rescale(-1);	
+      if(wave_pedestal.pedestal>chRec->GetThrForPulseInversion()) waveform->rescale(-1);	
       
       //find max amplitude between 50 and 900 samples
-      Waveform::max_amplitude_informations wave_max=waveform->max_amplitude(50,900,5); 
- 
+      Waveform::max_amplitude_informations wave_max=waveform->max_amplitude(chRec->GetMaxWindowLo(),
+									    chRec->GetMaxWindowUp(),
+									    5); 
+
       //fill information for the reco tree
       group_[maxch_]              = it->first.first;
       ch_[maxch_]                 = it->first.second;
@@ -117,10 +108,13 @@ void H4treeReco::FillWaveforms()
       pedestalRMS_[maxch_]        = wave_pedestal.rms;
       wave_max_[maxch_]           = wave_max.max_amplitude;
       charge_integ_[maxch_]       = waveform->charge_integrated(0,900);
-      charge_integ_max_[maxch_]   = waveform->charge_integrated(wave_max.time_at_max-1.3e-8,wave_max.time_at_max);
+      charge_integ_max_[maxch_]   = waveform->charge_integrated(wave_max.time_at_max-chRec->GetCFDWindowLo(),
+								wave_max.time_at_max);
       t_max_[maxch_]              = wave_max.time_at_max*1.e9;
-      t_max_frac30_[maxch_]       = waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.3,wave_max,7)*1.e9;
-      t_max_frac50_[maxch_]       = waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.5,wave_max,7)*1.e9;
+      t_max_frac30_[maxch_]       = waveform->time_at_frac(wave_max.time_at_max-chRec->GetCFDWindowLo(),
+							   wave_max.time_at_max,0.3,wave_max,7)*1.e9;
+      t_max_frac50_[maxch_]       = waveform->time_at_frac(wave_max.time_at_max-chRec->GetCFDWindowLo(),
+							   wave_max.time_at_max,0.5,wave_max,7)*1.e9;
     }
 }
 
@@ -191,7 +185,13 @@ H4treeReco::~H4treeReco()
 {
   fOut_->cd();
   recoT_->Write();
-  groupNamesH_->Write();
-  channelNamesH_->Write();
+  for(std::map<GroupChannelKey_t,ChannelReco*>::iterator it=chPlots_.begin();
+      it!=chPlots_.end();
+      it++)
+    {
+      TH1F *h=it->second->GetConfigSummary();
+      h->SetDirectory(fOut_);
+      h->Write();
+    }
   fOut_->Close();
 }
