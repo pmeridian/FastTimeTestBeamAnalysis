@@ -41,6 +41,7 @@ H4treeReco::H4treeReco(TChain *tree,JSONWrapper::Object *cfg,TString outUrl) :
   recoT_->Branch("pedestal",             pedestal_,            "pedestal[maxch]/F");
   recoT_->Branch("pedestalRMS",          pedestalRMS_,         "pedestalRMS[maxch]/F");
   recoT_->Branch("wave_max",             wave_max_,            "wave_max[maxch]/F");
+  recoT_->Branch("waveform_aroundmax",   waveform_aroundmax_,  "waveform_aroundmax[maxch][25]/F");
   recoT_->Branch("charge_integ",         charge_integ_,        "charge_integ[maxch]/F");
   recoT_->Branch("charge_integ_max",     charge_integ_max_,    "charge_integ_max[maxch]/F");
   recoT_->Branch("t_max",                t_max_,     	       "t_max[maxch]/F");
@@ -69,10 +70,12 @@ void H4treeReco::InitDigi()
 void H4treeReco::FillWaveforms()
 {
   //first reset waveforms
-  for (std::map<GroupChannelKey_t,ChannelReco*>::iterator it=chPlots_.begin();it!=chPlots_.end();++it,++maxch_)
+  int ictr(0);
+  for (std::map<GroupChannelKey_t,ChannelReco*>::iterator it=chPlots_.begin();it!=chPlots_.end();++it,ictr++)
     {
       it->second->ClearVectors();
       it->second->GetWaveform()->clear();
+      for(int k=0; k<25; k++) waveform_aroundmax_[ictr][k]=0;
     }
 
   //fill waveforms
