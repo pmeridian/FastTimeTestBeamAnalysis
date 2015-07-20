@@ -1,4 +1,20 @@
 {
+"tdc":[
+	{
+		"name":"WCD",
+		"l":0,
+		"r":1,
+		"d":2,
+		"u":3
+	},
+	{
+		"name":"WCE",
+		"l":4,
+		"r":5,
+		"d":6,
+		"u":7
+	}
+	],
 "digis":[
 	{
 		"name":"MPC",
@@ -12,7 +28,7 @@
 		"spyWindowLo":-10,
 		"spyWindowUp":10,
 		"cfdWindowLo":5e-9,
-		"thrForTiming":10
+		"thrForTiming":200
 	},
 	{
 		"name":"SiPad1",
@@ -26,7 +42,7 @@
 		"spyWindowLo":-10,
 		"spyWindowUp":10,
 		"cfdWindowLo":5e-9,
-		"thrForTiming":10
+		"thrForTiming":200
 	},
 	{
 		"name":"SiPad2",
@@ -37,6 +53,20 @@
 		"pedestalWindowUp":45,
 		"searchWindowLo":100,
 		"searchWindowUp":400,
+		"spyWindowLo":-10,
+		"spyWindowUp":10,
+		"cfdWindowLo":5e-9,
+		"thrForTiming":200
+	},
+	{
+		"name":"Trigger",
+		"group":0,
+		"channel":8,
+		"thrForPulseInversion":2100,
+		"pedestalWindowLo":5,
+		"pedestalWindowUp":45,
+		"searchWindowLo":0,
+		"searchWindowUp":1000,
 		"spyWindowLo":-10,
 		"spyWindowUp":10,
 		"cfdWindowLo":5e-9,

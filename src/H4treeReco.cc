@@ -9,10 +9,6 @@
 H4treeReco::H4treeReco(TChain *tree,JSONWrapper::Object *cfg,TString outUrl) : 
   H4tree(tree),
   cfg_(cfg),
-  wcXl_(4),   //TDC Xleft
-  wcXr_(5),   //TDC Xright
-  wcYd_(6),   //TDC Ydown
-  wcYu_(7),   //TDC Yup
   MaxTdcChannels_(16),
   MaxTdcReadings_(20),
   nActiveDigitizerChannels_(8)
@@ -31,8 +27,9 @@ H4treeReco::H4treeReco(TChain *tree,JSONWrapper::Object *cfg,TString outUrl) :
 
   //TDC 
   tdc_readings_.resize(MaxTdcChannels_);
-  recoT_->Branch("tdc_recox", &tdc_recox_, "tdc_recox/F");
-  recoT_->Branch("tdc_recoy", &tdc_recoy_, "tdc_recoy/F");
+  recoT_->Branch("nwc",       &nwc_,      "nwc/i");
+  recoT_->Branch("wc_recox",   wc_recox_, "wc_recox[nwc]/F");
+  recoT_->Branch("wc_recoy",   wc_recoy_, "wc_recoy[nwc]/F");
   
   //digitizer channel info
   recoT_->Branch("maxch",               &maxch_,               "maxch/i");
@@ -41,14 +38,15 @@ H4treeReco::H4treeReco(TChain *tree,JSONWrapper::Object *cfg,TString outUrl) :
   recoT_->Branch("pedestal",             pedestal_,            "pedestal[maxch]/F");
   recoT_->Branch("pedestalRMS",          pedestalRMS_,         "pedestalRMS[maxch]/F");
   recoT_->Branch("wave_max",             wave_max_,            "wave_max[maxch]/F");
-  recoT_->Branch("waveform_aroundmax",   waveform_aroundmax_,  "waveform_aroundmax[maxch][25]/F");
+  recoT_->Branch("wave_aroundmax",       wave_aroundmax_,      "wave_aroundmax[maxch][25]/F");
+  recoT_->Branch("time_aroundmax",       time_aroundmax_,      "time_aroundmax[maxch][25]/F");
   recoT_->Branch("charge_integ",         charge_integ_,        "charge_integ[maxch]/F");
   recoT_->Branch("charge_integ_max",     charge_integ_max_,    "charge_integ_max[maxch]/F");
   recoT_->Branch("t_max",                t_max_,     	       "t_max[maxch]/F");
   recoT_->Branch("t_max_frac30",         t_max_frac30_,        "t_max_frac30[maxch]/F");
   recoT_->Branch("t_max_frac50",         t_max_frac50_,        "t_max_frac50[maxch]/F");
   recoT_->Branch("t_at_threshold",       t_at_threshold_,      "t_at_threshold[maxch]/F");
-
+  recoT_->Branch("t_over_threshold",     t_over_threshold_,    "t_over_threshold[maxch]/F");
   InitDigi();
 }
 
@@ -65,6 +63,17 @@ void H4treeReco::InitDigi()
       chPlots_[key] = chRec;
       chPlots_[key]->SetWaveform( new Waveform() );
     }
+
+  //init wire chambers readout
+  std::vector<JSONWrapper::Object> wcs=(*cfg_)["wirechambers"].daughters();
+  nwc_=wcs.size();
+  for(size_t i=0; i<wcs.size(); i++)
+    {
+      wcXl_[i]=wcs[i]["l"].toInt();
+      wcXr_[i]=wcs[i]["r"].toInt();
+      wcYd_[i]=wcs[i]["d"].toInt();
+      wcYu_[i]=wcs[i]["u"].toInt();
+    }
 }
 
 //
@@ -76,7 +85,11 @@ void H4treeReco::FillWaveforms()
     {
       it->second->ClearVectors();
       it->second->GetWaveform()->clear();
-      for(int k=0; k<25; k++) waveform_aroundmax_[ictr][k]=0;
+      for(int k=0; k<25; k++) 
+	{
+	  wave_aroundmax_[ictr][k]=0;
+	  time_aroundmax_[ictr][k]=0;
+	}
     }
 
   //fill waveforms
@@ -125,7 +138,8 @@ void H4treeReco::FillWaveforms()
 	  int idx2store = i-chRec->GetSpyWindowLo();
 	  int idx       = wave_max.sample_at_max+i;
 	  float val( (idx>=0 && idx<(int)waveform->_samples.size()) ? waveform->_samples[idx] : 0. );
-	  waveform_aroundmax_[maxch_][idx2store]=val;
+	  wave_aroundmax_[maxch_][idx2store]=val;
+	  time_aroundmax_[maxch_][idx2store]=waveform->_times[idx];
 	}
       
       //charge integrated
@@ -151,12 +165,17 @@ void H4treeReco::FillWaveforms()
 								 wave_max,
 								 7);
 
-      //time estimate at fixed value
-      std::vector<float> crossingTimes = waveform->time_at_threshold(wave_max.time_at_max-chRec->GetCFDWindowLo(),
-								     wave_max.time_at_max,
-								     chRec->GetThrForTiming(),
-								     5);
-      t_at_threshold_[maxch_] = 1.0e9*(crossingTimes.size()>0 ? crossingTimes[0] : -1);
+      //time estimate at fixed value (only if max is above threshold)
+      t_at_threshold_[maxch_] = -999;
+      if(wave_max.max_amplitude>chRec->GetThrForTiming())
+	{
+	  std::vector<float> crossingTimes = waveform->time_at_threshold(wave_max.time_at_max-chRec->GetCFDWindowLo(),
+									 wave_max.time_at_max,
+									 chRec->GetThrForTiming(),
+									 5);
+	  t_at_threshold_[maxch_]   = 1.0e9*(crossingTimes.size()>0 ? crossingTimes[0] : -999);
+	  t_over_threshold_[maxch_] = 1.0e9*(crossingTimes.size()>1 ? crossingTimes[1]-crossingTimes[0] : -999);
+	}
     }
 }
 
@@ -196,29 +215,32 @@ void H4treeReco::Loop()
 //
 void H4treeReco::FillTDC()
 {
-  tdc_recox_=-999;
-  tdc_recoy_=-999;
-
-  for (uint j=0; j<MaxTdcChannels_; j++){
-    tdc_readings_[j].clear();
-  }
+  //reset data
+  for (uint j=0; j<MaxTdcChannels_; j++){ tdc_readings_[j].clear();}
   
-  for (uint i=0; i<nTdcChannels; i++){
-    if (tdcChannel[i]<MaxTdcChannels_){
-      tdc_readings_[tdcChannel[i]].push_back((float)tdcData[i]);
+  //fill with new data
+  for (uint i=0; i<nTdcChannels; i++)
+    {
+      if (tdcChannel[i]<MaxTdcChannels_)
+	{
+	  tdc_readings_[tdcChannel[i]].push_back((float)tdcData[i]);
+	}
     }
-  }
-  
-  if (tdc_readings_[wcXl_].size()!=0 && tdc_readings_[wcXr_].size()!=0){
-    float TXl = *std::min_element(tdc_readings_[wcXl_].begin(),tdc_readings_[wcXl_].begin()+tdc_readings_[wcXl_].size());
-    float TXr = *std::min_element(tdc_readings_[wcXr_].begin(),tdc_readings_[wcXr_].begin()+tdc_readings_[wcXr_].size());
-    tdc_recox_ = (TXr-TXl)*0.005; // = /40./5./10. //position in cm 0.2mm/ns with 25ps LSB TDC
-  }
-  if (tdc_readings_[wcYd_].size()!=0 && tdc_readings_[wcYu_].size()!=0){
-    float TYd = *std::min_element(tdc_readings_[wcYd_].begin(),tdc_readings_[wcYd_].begin()+tdc_readings_[wcYd_].size());
-    float TYu = *std::min_element(tdc_readings_[wcYu_].begin(),tdc_readings_[wcYu_].begin()+tdc_readings_[wcYu_].size());
-    tdc_recoy_ = (TYu-TYd)*0.005; // = /40./5./10. //position in cm 0.2mm/ns with 25ps LSB TDC
-  }
+
+  //compute average positions
+  for(UInt_t iwc=0; iwc<nwc_; iwc++)
+    {
+      if (tdc_readings_[wcXl_[iwc]].size()!=0 && tdc_readings_[wcXr_[iwc]].size()!=0){
+	float TXl = *std::min_element(tdc_readings_[wcXl_[iwc]].begin(),tdc_readings_[wcXl_[iwc]].begin()+tdc_readings_[wcXl_[iwc]].size());
+	float TXr = *std::min_element(tdc_readings_[wcXr_[iwc]].begin(),tdc_readings_[wcXr_[iwc]].begin()+tdc_readings_[wcXr_[iwc]].size());
+	wc_recox_[iwc] = (TXr-TXl)*0.005; // = /40./5./10. //position in cm 0.2mm/ns with 25ps LSB TDC
+      }
+      if (tdc_readings_[wcYd_[iwc]].size()!=0 && tdc_readings_[wcYu_[iwc]].size()!=0){
+	float TYd = *std::min_element(tdc_readings_[wcYd_[iwc]].begin(),tdc_readings_[wcYd_[iwc]].begin()+tdc_readings_[wcYd_[iwc]].size());
+	float TYu = *std::min_element(tdc_readings_[wcYu_[iwc]].begin(),tdc_readings_[wcYu_[iwc]].begin()+tdc_readings_[wcYu_[iwc]].size());
+	wc_recoy_[iwc] = (TYu-TYd)*0.005; // = /40./5./10. //position in cm 0.2mm/ns with 25ps LSB TDC
+      }
+    }
 }
 
 
