@@ -97,21 +97,21 @@ void H4treeReco::FillWaveforms()
     {
       GroupChannelKey_t key(digiGroup[iSample],digiChannel[iSample]);
       if(chPlots_.find(key)==chPlots_.end()) continue;
-      if(digiChannel[iSample]>=nActiveDigitizerChannels_) continue;
+      if(digiChannel[iSample]>nActiveDigitizerChannels_) continue;
       chPlots_[key]->GetWaveform()->addTimeAndSample(digiSampleIndex[iSample]*timeSampleUnit(digiFrequency[iSample]),
 						     digiSampleValue[iSample]);
     }
 
   //reconstruct waveforms
-
   maxch_=0;
   for (std::map<GroupChannelKey_t,ChannelReco*>::iterator it=chPlots_.begin();it!=chPlots_.end();++it,++maxch_)
     {
       // Extract waveform information:
       ChannelReco *chRec=it->second;
       Waveform * waveform = chRec->GetWaveform() ;
-       
-      //use 40 samples between 5-44 to get pedestal and RMS
+      if(waveform->_samples.size()==0) continue;
+
+      //use samples to get pedestal and RMS
       Waveform::baseline_informations wave_pedestal= waveform->baseline(chRec->GetPedestalWindowLo(),
 									chRec->GetPedestalWindowUp()); 
 
