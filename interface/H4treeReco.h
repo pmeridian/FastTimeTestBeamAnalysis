@@ -43,7 +43,9 @@ class H4treeReco : public H4tree
   UInt_t MaxTdcChannels_,MaxTdcReadings_;
   std::vector< std::vector<Float_t> > tdc_readings_;
   Float_t wc_recox_[16], wc_recoy_[16];
+  UInt_t wc_xl_hits_[16], wc_xr_hits_[16], wc_yu_hits_[16], wc_yd_hits_[16]; 
   UInt_t nwc_,wcXl_[4],wcXr_[4],wcYu_[4],wcYd_[4];
+
 
 
   //Channels to RECO
@@ -51,7 +53,7 @@ class H4treeReco : public H4tree
   UInt_t maxch_;
   Float_t group_[100],ch_[100];
   Float_t pedestal_[100],         pedestalRMS_[100];
-  Float_t wave_max_[100], wave_aroundmax_[100][25], time_aroundmax_[100][25];
+  Float_t wave_max_[100], wave_max_aft_[100], wave_aroundmax_[100][50], time_aroundmax_[100][50];
   Float_t charge_integ_max_[100], charge_integ_max30_[100], charge_integ_max50_[100], charge_integ_[100];
   Float_t t_max_[100],            t_max_frac30_[100],       t_max_frac50_[100],       t_at_threshold_[100], t_over_threshold_[100];
 

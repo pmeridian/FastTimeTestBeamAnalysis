@@ -30,6 +30,7 @@ public:
   void SetPlot(TObject* plot)                                 { plot_=plot; }
   TObject* GetPlot()                                          { return plot_; }
   TString GetName()                                           { return name_; }
+  //Int
   Int_t GetGroup()                                            { return group_; }
   Int_t GetModule()                                           { return module_; }
   Int_t GetThrForPulseInversion()                             { return thrForPulseInversion_; }
@@ -37,10 +38,13 @@ public:
   Int_t GetPedestalWindowUp()                                 { return pedestalWindowUp_; }
   Int_t GetSearchWindowUp()                                   { return searchWindowUp_; }
   Int_t GetSearchWindowLo()                                   { return searchWindowLo_; }  
-  Int_t GetCFDWindowLo()                                      { return cfdWindowLo_; }
-  Float_t GetThrForTiming()                                   { return thrForTiming_; }
   Int_t GetSpyWindowLo()                                      { return spyWindowLo_; }
   Int_t GetSpyWindowUp()                                      { return spyWindowUp_; }
+  //Float
+  Float_t GetCFDWindowLo()                                    { return cfdWindowLo_; }
+  Float_t GetSearchWindowAfterLo()                            { return searchWindowAfterLo_; }
+  Float_t GetSearchWindowAfterUp()                            { return searchWindowAfterUp_; }
+  Float_t GetThrForTiming()                                   { return thrForTiming_; }
   Waveform *GetWaveform()                                     { return waveform_; }
   TH1F *GetConfigSummary()                                    { return chRecoCfgH_; }
   void SetWaveform(Waveform *w)                               { waveform_=w; }
@@ -53,6 +57,7 @@ public:
   
   Int_t group_, module_,searchWindowUp_,searchWindowLo_,spyWindowLo_,spyWindowUp_;
   Float_t cfdWindowLo_;
+  Float_t searchWindowAfterLo_, searchWindowAfterUp_;
   Int_t thrForPulseInversion_,pedestalWindowLo_,pedestalWindowUp_;
   Float_t thrForTiming_;
   int ptype_;

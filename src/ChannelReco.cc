@@ -14,6 +14,8 @@ ChannelReco::ChannelReco(JSONWrapper::Object &cfg, PlotType ptype, Bool_t doPlot
   module_            = cfg["channel"].toInt();
   searchWindowUp_       = cfg["searchWindowUp"].toInt();
   searchWindowLo_       = cfg["searchWindowLo"].toInt();
+  searchWindowAfterUp_       = cfg["searchWindowAfterUp"].toDouble();
+  searchWindowAfterLo_       = cfg["searchWindowAfterLo"].toDouble();
   spyWindowUp_       = cfg["spyWindowUp"].toInt();
   spyWindowLo_       = cfg["spyWindowLo"].toInt();
   cfdWindowLo_       = cfg["cfdWindowLo"].toDouble();
@@ -23,19 +25,21 @@ ChannelReco::ChannelReco(JSONWrapper::Object &cfg, PlotType ptype, Bool_t doPlot
   thrForPulseInversion_ = cfg["thrForPulseInversion"].toInt();
  
   //save configuration values in a histogram
-  chRecoCfgH_ = new TH1F(name_+"_cfg",";"+name_+";Value",12,0,12);
+  chRecoCfgH_ = new TH1F(name_+"_cfg",";"+name_+";Value",14,0,14);
   chRecoCfgH_->SetDirectory(0);
   chRecoCfgH_->SetBinContent(1,group_);                  chRecoCfgH_->GetXaxis()->SetBinLabel(1,"group");
   chRecoCfgH_->SetBinContent(2,module_);                 chRecoCfgH_->GetXaxis()->SetBinLabel(2,"channel");
   chRecoCfgH_->SetBinContent(3,searchWindowUp_);         chRecoCfgH_->GetXaxis()->SetBinLabel(3,"searchWindowUp");
   chRecoCfgH_->SetBinContent(4,searchWindowLo_);         chRecoCfgH_->GetXaxis()->SetBinLabel(4,"searchWindowLo");
-  chRecoCfgH_->SetBinContent(5,cfdWindowLo_);            chRecoCfgH_->GetXaxis()->SetBinLabel(5,"cfdWindowLo");
-  chRecoCfgH_->SetBinContent(6,thrForTiming_);           chRecoCfgH_->GetXaxis()->SetBinLabel(6,"thrForTiming");
-  chRecoCfgH_->SetBinContent(7,pedestalWindowLo_);       chRecoCfgH_->GetXaxis()->SetBinLabel(7,"pedestalWindowLo");
-  chRecoCfgH_->SetBinContent(8,pedestalWindowUp_);       chRecoCfgH_->GetXaxis()->SetBinLabel(8,"pedestalWindowUp");
-  chRecoCfgH_->SetBinContent(9,thrForPulseInversion_);   chRecoCfgH_->GetXaxis()->SetBinLabel(9,"thrForPulseInversion");
-  chRecoCfgH_->SetBinContent(10,spyWindowUp_);           chRecoCfgH_->GetXaxis()->SetBinLabel(10,"spyWindowUp");
-  chRecoCfgH_->SetBinContent(11,spyWindowLo_);           chRecoCfgH_->GetXaxis()->SetBinLabel(11,"spyWindowLo");
+  chRecoCfgH_->SetBinContent(5,searchWindowAfterUp_);         chRecoCfgH_->GetXaxis()->SetBinLabel(5,"searchWindowAfterUp");
+  chRecoCfgH_->SetBinContent(6,searchWindowAfterLo_);         chRecoCfgH_->GetXaxis()->SetBinLabel(6,"searchWindowAfterLo");
+  chRecoCfgH_->SetBinContent(7,cfdWindowLo_);            chRecoCfgH_->GetXaxis()->SetBinLabel(5,"cfdWindowLo");
+  chRecoCfgH_->SetBinContent(8,thrForTiming_);           chRecoCfgH_->GetXaxis()->SetBinLabel(6,"thrForTiming");
+  chRecoCfgH_->SetBinContent(9,pedestalWindowLo_);       chRecoCfgH_->GetXaxis()->SetBinLabel(7,"pedestalWindowLo");
+  chRecoCfgH_->SetBinContent(10,pedestalWindowUp_);       chRecoCfgH_->GetXaxis()->SetBinLabel(8,"pedestalWindowUp");
+  chRecoCfgH_->SetBinContent(11,thrForPulseInversion_);   chRecoCfgH_->GetXaxis()->SetBinLabel(9,"thrForPulseInversion");
+  chRecoCfgH_->SetBinContent(12,spyWindowUp_);           chRecoCfgH_->GetXaxis()->SetBinLabel(10,"spyWindowUp");
+  chRecoCfgH_->SetBinContent(13,spyWindowLo_);           chRecoCfgH_->GetXaxis()->SetBinLabel(11,"spyWindowLo");
 
   std::cout << "\t " << name_ << " will be reconstructed from group=" << group_ << " channel=" << module_ << std::endl;
 }

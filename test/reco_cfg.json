@@ -1,5 +1,5 @@
 {
-"tdc":[
+"wirechambers":[
 	{
 		"name":"WCD",
 		"l":0,
@@ -25,8 +25,10 @@
 		"pedestalWindowUp":45,
 		"searchWindowLo":100,
 		"searchWindowUp":400,
-		"spyWindowLo":-10,
-		"spyWindowUp":10,
+		"searchWindowAfterLo":1.E-8,
+		"searchWindowAfterUp":8.E-8,
+		"spyWindowLo":-20,
+		"spyWindowUp":20,
 		"cfdWindowLo":5e-9,
 		"thrForTiming":200
 	},
@@ -39,8 +41,10 @@
 		"pedestalWindowUp":45,
 		"searchWindowLo":100,
 		"searchWindowUp":400,
-		"spyWindowLo":-10,
-		"spyWindowUp":10,
+		"searchWindowAfterLo":1.E-8,
+		"searchWindowAfterUp":8.E-8,
+		"spyWindowLo":-20,
+		"spyWindowUp":20,
 		"cfdWindowLo":5e-9,
 		"thrForTiming":200
 	},
@@ -53,8 +57,10 @@
 		"pedestalWindowUp":45,
 		"searchWindowLo":100,
 		"searchWindowUp":400,
-		"spyWindowLo":-10,
-		"spyWindowUp":10,
+		"searchWindowAfterLo":1.E-8,
+		"searchWindowAfterUp":8.E-8,
+		"spyWindowLo":-20,
+		"spyWindowUp":20,
 		"cfdWindowLo":5e-9,
 		"thrForTiming":200
 	},
@@ -62,15 +68,15 @@
 		"name":"Trigger",
 		"group":0,
 		"channel":8,
-		"thrForPulseInversion":2100,
+		"thrForPulseInversion":1500,
 		"pedestalWindowLo":5,
 		"pedestalWindowUp":45,
-		"searchWindowLo":0,
+		"searchWindowLo":600,
 		"searchWindowUp":1000,
-		"spyWindowLo":-10,
-		"spyWindowUp":10,
-		"cfdWindowLo":5e-9,
-		"thrForTiming":10
+		"spyWindowLo":-20,
+		"spyWindowUp":20,
+		"cfdWindowLo":2e-8,
+		"thrForTiming":1100
 	}
 	]
 }
