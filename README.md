@@ -13,10 +13,10 @@ make
 A shared library (executable) will be produced under 
 FastTimeTestBeamAnalysis/lib 
 (FastTimeTestBeamAnalysis/bin)
-containing the relevant functions for the reconstruction using H4DQM utils.
+containing the relevant functions for the reconstruction (based on H4DQM utils).
 Before running the executable one must updated the environment variables with
 ```
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:`pwd`/lib
+source test/setup.(c)sh
 ```
 
 ## Reconstruction step
