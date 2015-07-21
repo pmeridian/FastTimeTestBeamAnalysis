@@ -1,5 +1,5 @@
 #include "interface/ChannelReco.h"
-
+#include <iostream>
 //
 ChannelReco::ChannelReco(JSONWrapper::Object &cfg, PlotType ptype, Bool_t doPlot, Bool_t doProfile) :
   ptype_(ptype),
@@ -23,9 +23,11 @@ ChannelReco::ChannelReco(JSONWrapper::Object &cfg, PlotType ptype, Bool_t doPlot
   pedestalWindowLo_   = cfg["pedestalWindowLo"].toInt();
   pedestalWindowUp_   = cfg["pedestalWindowUp"].toInt();
   thrForPulseInversion_ = cfg["thrForPulseInversion"].toInt();
- 
+  samplesToInterpolateAtMax_ = cfg["samplesToInterpolateAtMax"].toInt();
+  samplesToInterpolateForCFD_ = cfg["samplesToInterpolateForCFD"].toInt();
+  samplesToInterpolateForTD_ = cfg["samplesToInterpolateForTD"].toInt();
   //save configuration values in a histogram
-  chRecoCfgH_ = new TH1F(name_+"_cfg",";"+name_+";Value",14,0,14);
+  chRecoCfgH_ = new TH1F(name_+"_cfg",";"+name_+";Value",17,0,17);
   chRecoCfgH_->SetDirectory(0);
   chRecoCfgH_->SetBinContent(1,group_);                  chRecoCfgH_->GetXaxis()->SetBinLabel(1,"group");
   chRecoCfgH_->SetBinContent(2,module_);                 chRecoCfgH_->GetXaxis()->SetBinLabel(2,"channel");
@@ -33,17 +35,42 @@ ChannelReco::ChannelReco(JSONWrapper::Object &cfg, PlotType ptype, Bool_t doPlot
   chRecoCfgH_->SetBinContent(4,searchWindowLo_);         chRecoCfgH_->GetXaxis()->SetBinLabel(4,"searchWindowLo");
   chRecoCfgH_->SetBinContent(5,searchWindowAfterUp_);         chRecoCfgH_->GetXaxis()->SetBinLabel(5,"searchWindowAfterUp");
   chRecoCfgH_->SetBinContent(6,searchWindowAfterLo_);         chRecoCfgH_->GetXaxis()->SetBinLabel(6,"searchWindowAfterLo");
-  chRecoCfgH_->SetBinContent(7,cfdWindowLo_);            chRecoCfgH_->GetXaxis()->SetBinLabel(5,"cfdWindowLo");
-  chRecoCfgH_->SetBinContent(8,thrForTiming_);           chRecoCfgH_->GetXaxis()->SetBinLabel(6,"thrForTiming");
-  chRecoCfgH_->SetBinContent(9,pedestalWindowLo_);       chRecoCfgH_->GetXaxis()->SetBinLabel(7,"pedestalWindowLo");
-  chRecoCfgH_->SetBinContent(10,pedestalWindowUp_);       chRecoCfgH_->GetXaxis()->SetBinLabel(8,"pedestalWindowUp");
-  chRecoCfgH_->SetBinContent(11,thrForPulseInversion_);   chRecoCfgH_->GetXaxis()->SetBinLabel(9,"thrForPulseInversion");
-  chRecoCfgH_->SetBinContent(12,spyWindowUp_);           chRecoCfgH_->GetXaxis()->SetBinLabel(10,"spyWindowUp");
-  chRecoCfgH_->SetBinContent(13,spyWindowLo_);           chRecoCfgH_->GetXaxis()->SetBinLabel(11,"spyWindowLo");
+  chRecoCfgH_->SetBinContent(7,cfdWindowLo_);            chRecoCfgH_->GetXaxis()->SetBinLabel(7,"cfdWindowLo");
+  chRecoCfgH_->SetBinContent(8,thrForTiming_);           chRecoCfgH_->GetXaxis()->SetBinLabel(8,"thrForTiming");
+  chRecoCfgH_->SetBinContent(9,pedestalWindowLo_);       chRecoCfgH_->GetXaxis()->SetBinLabel(9,"pedestalWindowLo");
+  chRecoCfgH_->SetBinContent(10,pedestalWindowUp_);       chRecoCfgH_->GetXaxis()->SetBinLabel(10,"pedestalWindowUp");
+  chRecoCfgH_->SetBinContent(11,thrForPulseInversion_);   chRecoCfgH_->GetXaxis()->SetBinLabel(11,"thrForPulseInversion");
+  chRecoCfgH_->SetBinContent(12,spyWindowUp_);           chRecoCfgH_->GetXaxis()->SetBinLabel(12,"spyWindowUp");
+  chRecoCfgH_->SetBinContent(13,spyWindowLo_);           chRecoCfgH_->GetXaxis()->SetBinLabel(13,"spyWindowLo");
+  chRecoCfgH_->SetBinContent(14,samplesToInterpolateAtMax_);       chRecoCfgH_->GetXaxis()->SetBinLabel(14,"samplesToInterpolateAtMax");
+  chRecoCfgH_->SetBinContent(15,samplesToInterpolateForCFD_);       chRecoCfgH_->GetXaxis()->SetBinLabel(15,"samplesToInterpolateForMax");
+  chRecoCfgH_->SetBinContent(16,samplesToInterpolateForTD_);       chRecoCfgH_->GetXaxis()->SetBinLabel(16,"samplesToInterpolateForTD");
 
-  std::cout << "\t " << name_ << " will be reconstructed from group=" << group_ << " channel=" << module_ << std::endl;
+  //  std::cout << "\t " << name_ << " will be reconstructed from group=" << group_ << " channel=" << module_ << std::endl;
+  Print();
 }
 
+void ChannelReco::Print()
+{
+  std::cout << "=====  Dump Channel Config  =====" << std::endl;
+  std::cout << "name\t" << name_ << std::endl;
+  std::cout << "group\t" << group_ << std::endl;
+  std::cout << "channel\t" << module_ << std::endl;
+  std::cout << "Pedestal WindowLo\t" << this->GetPedestalWindowLo() << std::endl;
+  std::cout << "Pedestal WindowUp\t" << this->GetPedestalWindowUp() << std::endl;
+  std::cout << "Inversion Threshold\t" << this->GetThrForPulseInversion() << std::endl;
+  std::cout << "Max Search WindowLo\t" << this->GetSearchWindowLo() << std::endl;
+  std::cout << "Max Search WindowUp\t" << this->GetSearchWindowUp() << std::endl;
+  std::cout << "Max Search WindowAfterLo\t" << this->GetSearchWindowAfterLo() << std::endl;
+  std::cout << "Max Search WindowAfterUp\t" << this->GetSearchWindowAfterUp() << std::endl;
+  std::cout << "SaveWaveform WindowLo\t" << this->GetSpyWindowLo() << std::endl;
+  std::cout << "SaveWaveform WindowUp\t" << this->GetSpyWindowUp() << std::endl;
+  std::cout << "CFD WindowLo\t" << this->GetCFDWindowLo() << std::endl;
+  std::cout << "TD Value\t" << this->GetThrForTiming() << std::endl;
+  std::cout << "Samples to interpolate at MAX\t" << this->GetSamplesToInterpolateAtMax() << std::endl;
+  std::cout << "Samples to interpolate for CFD\t" << this->GetSamplesToInterpolateForCFD() << std::endl;
+  std::cout << "Samples to interpolate for TD\t" << this->GetSamplesToInterpolateForTD() << std::endl;
+}
 //
 void ChannelReco::Fill(float valX, float valY, int i) 
 {

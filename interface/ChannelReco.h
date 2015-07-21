@@ -40,6 +40,9 @@ public:
   Int_t GetSearchWindowLo()                                   { return searchWindowLo_; }  
   Int_t GetSpyWindowLo()                                      { return spyWindowLo_; }
   Int_t GetSpyWindowUp()                                      { return spyWindowUp_; }
+  Int_t GetSamplesToInterpolateAtMax()                        { return samplesToInterpolateAtMax_; } 
+  Int_t GetSamplesToInterpolateForCFD()                       { return samplesToInterpolateForCFD_; } 
+  Int_t GetSamplesToInterpolateForTD()                       { return samplesToInterpolateForTD_; } 
   //Float
   Float_t GetCFDWindowLo()                                    { return cfdWindowLo_; }
   Float_t GetSearchWindowAfterLo()                            { return searchWindowAfterLo_; }
@@ -50,7 +53,8 @@ public:
   void SetWaveform(Waveform *w)                               { waveform_=w; }
   void Fill(float valX, float valY, int i=-1);
   void Fill2D(float valX, float valY, float valZ, int i);
- 
+  void Print();
+  
   ~ChannelReco();
 
  private:
@@ -59,6 +63,7 @@ public:
   Float_t cfdWindowLo_;
   Float_t searchWindowAfterLo_, searchWindowAfterUp_;
   Int_t thrForPulseInversion_,pedestalWindowLo_,pedestalWindowUp_;
+  Int_t samplesToInterpolateAtMax_,samplesToInterpolateForCFD_,samplesToInterpolateForTD_;
   Float_t thrForTiming_;
   int ptype_;
   bool doPlot_, doProfile_;
