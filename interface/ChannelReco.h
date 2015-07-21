@@ -24,8 +24,8 @@ public:
   float GetX(UInt_t i)                                        { return x_.at(i); }
   std::vector<float> &GetY()                                  { return y_; }
   float GetY(UInt_t i)                                        { return y_.at(i); }
-  std::pair<float,float> GetXY(uint i)                        { return std::make_pair<float,float>(x_.at(i),y_.at(i)); }
-  std::pair<std::vector<float> *, std::vector<float>*> Get2D(){ return std::make_pair<std::vector<float>*, std::vector<float>*>(&x_,&y_); }
+  std::pair<float,float> GetXY(uint i)                        { return std::pair<float,float>(x_.at(i),y_.at(i)); }
+  std::pair<std::vector<float> *, std::vector<float>*> Get2D(){ return std::pair<std::vector<float>*, std::vector<float>*>(&x_,&y_); }
   void ClearVectors()                                         { x_.clear(); y_.clear(); }
   void SetPlot(TObject* plot)                                 { plot_=plot; }
   TObject* GetPlot()                                          { return plot_; }
