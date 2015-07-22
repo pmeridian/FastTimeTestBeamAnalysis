@@ -60,6 +60,7 @@ void H4treeReco::InitDigi()
 {
   //init channels of interest
   std::vector<JSONWrapper::Object> digis=(*cfg_)["digis"].daughters();
+  trigger_=std::pair<int,int>(-1,-1);
   for(size_t i=0; i<digis.size(); i++)
     {
       //add a ChannelPlot class for the reconstruction
@@ -67,6 +68,8 @@ void H4treeReco::InitDigi()
       GroupChannelKey_t key(chRec->GetGroup(),chRec->GetModule());
       chPlots_[key] = chRec;
       chPlots_[key]->SetWaveform( new Waveform() );
+      if (chRec->GetName() == "Trigger" )
+	  trigger_=key;
     }
 
   //init wire chambers readout
@@ -108,87 +111,108 @@ void H4treeReco::FillWaveforms()
     }
 
   //reconstruct waveforms
-  maxch_=0;
-  for (std::map<GroupChannelKey_t,ChannelReco*>::iterator it=chPlots_.begin();it!=chPlots_.end();++it,++maxch_)
+  maxch_=0;  
+  //first reconsruct trigger
+  if (trigger_ != std::pair<int,int>(-1,-1))
+      reconstructWaveform(trigger_);
+
+  for (std::map<GroupChannelKey_t,ChannelReco*>::iterator it=chPlots_.begin();it!=chPlots_.end();++it)
+      if ((*it).first!=trigger_)
+	  reconstructWaveform((*it).first);
+	  
+}
+
+
+void H4treeReco::reconstructWaveform(GroupChannelKey_t key)
+{
+  std::map<GroupChannelKey_t,ChannelReco*>::iterator it=chPlots_.find(key);
+  // Extract waveform information:
+  ChannelReco *chRec=it->second;
+  Waveform * waveform = chRec->GetWaveform() ;
+  if(waveform->_samples.size()==0) return;
+  
+  //use samples to get pedestal and RMS
+  Waveform::baseline_informations wave_pedestal= waveform->baseline(chRec->GetPedestalWindowLo(),
+								    chRec->GetPedestalWindowUp()); 
+  
+  //substract the pedestal from the samples
+  waveform->offset(wave_pedestal.pedestal);
+  
+  //if pedestal is very high, the signal is negative -> invert it
+  if(wave_pedestal.pedestal>chRec->GetThrForPulseInversion()) waveform->rescale(-1);	
+  
+  //find max amplitude in search window (5 is the number of samples around max for the interpolation)
+  int searchWindowLo=chRec->GetSearchWindowLo();
+  int searchWindowUp=chRec->GetSearchWindowUp();
+  if (chRec->GetSearchWindowTriggerRelative() && (*it).first != trigger_)
     {
-      // Extract waveform information:
-      ChannelReco *chRec=it->second;
-      Waveform * waveform = chRec->GetWaveform() ;
-      if(waveform->_samples.size()==0) continue;
-
-      //use samples to get pedestal and RMS
-      Waveform::baseline_informations wave_pedestal= waveform->baseline(chRec->GetPedestalWindowLo(),
-									chRec->GetPedestalWindowUp()); 
-
-      //substract the pedestal from the samples
-      waveform->offset(wave_pedestal.pedestal);
-      
-      //if pedestal is very high, the signal is negative -> invert it
-      if(wave_pedestal.pedestal>chRec->GetThrForPulseInversion()) waveform->rescale(-1);	
-      
-      //find max amplitude in search window (5 is the number of samples around max for the interpolation)
-      Waveform::max_amplitude_informations wave_max=waveform->max_amplitude(chRec->GetSearchWindowLo(),
-									    chRec->GetSearchWindowUp(),
-									    chRec->GetSamplesToInterpolateAtMax()
-									    ); 
-
-      //find max amplitude in the search window after the max (to check for ringing issues)
-      Waveform::max_amplitude_informations wave_max_aft=waveform->max_amplitude(std::min((int)wave_max.sample_at_max+(int)(chRec->GetSearchWindowAfterLo()/waveform->_times[1]),(int)waveform->_samples.size()),
-										std::min((int)wave_max.sample_at_max+(int)(chRec->GetSearchWindowAfterUp()/waveform->_times[1]),(int)waveform->_samples.size()),		  
-										chRec->GetSamplesToInterpolateAtMax()); 
-      
-      //fill information for the reco tree
-      group_[maxch_]              = it->first.first;
-      ch_[maxch_]                 = it->first.second;
-      pedestal_[maxch_]           = wave_pedestal.pedestal;
-      pedestalRMS_[maxch_]        = wave_pedestal.rms;
-      wave_max_[maxch_]           = wave_max.max_amplitude;
-      wave_max_aft_[maxch_]           = wave_max_aft.max_amplitude; //for studying ringing issues after the samples
-      t_max_[maxch_]              = wave_max.time_at_max*1.e9;
-      for(int i=chRec->GetSpyWindowLo(); i<=chRec->GetSpyWindowUp(); i++)
+      //When this is enabled, trigger should always be reconstructed always as channel 0
+      searchWindowLo+=(int)((t_at_threshold_[0])/(waveform->_times[1]*1E9));
+      searchWindowUp+=(int)((t_at_threshold_[0])/(waveform->_times[1]*1E9));
+    }
+  
+  Waveform::max_amplitude_informations wave_max=waveform->max_amplitude(searchWindowLo,
+									searchWindowUp,
+									chRec->GetSamplesToInterpolateAtMax()
+									); 
+  
+  //find max amplitude in the search window after the max (to check for ringing issues)
+  Waveform::max_amplitude_informations wave_max_aft=waveform->max_amplitude(std::min((int)wave_max.sample_at_max+(int)(chRec->GetSearchWindowAfterLo()/waveform->_times[1]),(int)waveform->_samples.size()),
+									    std::min((int)wave_max.sample_at_max+(int)(chRec->GetSearchWindowAfterUp()/waveform->_times[1]),(int)waveform->_samples.size()),		  
+									    chRec->GetSamplesToInterpolateAtMax()); 
+  
+  //fill information for the reco tree
+  group_[maxch_]              = it->first.first;
+  ch_[maxch_]                 = it->first.second;
+  pedestal_[maxch_]           = wave_pedestal.pedestal;
+  pedestalRMS_[maxch_]        = wave_pedestal.rms;
+  wave_max_[maxch_]           = wave_max.max_amplitude;
+  wave_max_aft_[maxch_]           = wave_max_aft.max_amplitude; //for studying ringing issues after the samples
+  t_max_[maxch_]              = wave_max.time_at_max*1.e9;
+  for(int i=chRec->GetSpyWindowLo(); i<=chRec->GetSpyWindowUp(); i++)
+    {
+      int idx2store = i-chRec->GetSpyWindowLo();
+      int idx       = wave_max.sample_at_max+i;
+      float val( (idx>=0 && idx<(int)waveform->_samples.size()) ? waveform->_samples[idx] : -9999. );
+      if (val > -9999)
 	{
-	  int idx2store = i-chRec->GetSpyWindowLo();
-	  int idx       = wave_max.sample_at_max+i;
-	  float val( (idx>=0 && idx<(int)waveform->_samples.size()) ? waveform->_samples[idx] : -9999. );
-	  if (val > -9999)
-	    {
-	      wave_aroundmax_[maxch_][idx2store]=val;
-	      time_aroundmax_[maxch_][idx2store]=waveform->_times[idx];
-	    }
-	  else
-	    {
-	      wave_aroundmax_[maxch_][idx2store]=-9999;
-	      time_aroundmax_[maxch_][idx2store]=-9999;
-	    }
-
+	  wave_aroundmax_[maxch_][idx2store]=val;
+	  time_aroundmax_[maxch_][idx2store]=waveform->_times[idx];
+	}
+      else
+	{
+	  wave_aroundmax_[maxch_][idx2store]=-9999;
+	  time_aroundmax_[maxch_][idx2store]=-9999;
 	}
       
-      //charge integrated
-      charge_integ_[maxch_]       = waveform->charge_integrated(wave_max.sample_at_max-chRec->GetCFDWindowLo()/waveform->_times[1],
-								wave_max.sample_at_max+2*chRec->GetCFDWindowLo()/waveform->_times[1]);
-
-      //charge integrated up to the max
-      charge_integ_max_[maxch_]   = waveform->charge_integrated(wave_max.sample_at_max-chRec->GetCFDWindowLo()/waveform->_times[1],
-								wave_max.sample_at_max);
-
-      //interpolates the wave form in a time range to find the time at 30% of the max
-      //7 is the number of samples to use in the interpolation
-      t_max_frac30_[maxch_]       = 1.0e9*waveform->time_at_frac(wave_max.time_at_max-chRec->GetCFDWindowLo(),
-								 wave_max.time_at_max,
-								 0.3,
-								 wave_max,
+    }
+  
+  //charge integrated
+  charge_integ_[maxch_]       = waveform->charge_integrated(wave_max.sample_at_max-chRec->GetCFDWindowLo()/waveform->_times[1],
+							    wave_max.sample_at_max+2*chRec->GetCFDWindowLo()/waveform->_times[1]);
+  
+  //charge integrated up to the max
+  charge_integ_max_[maxch_]   = waveform->charge_integrated(wave_max.sample_at_max-chRec->GetCFDWindowLo()/waveform->_times[1],
+							    wave_max.sample_at_max);
+  
+  //interpolates the wave form in a time range to find the time at 30% of the max
+  //7 is the number of samples to use in the interpolation
+  t_max_frac30_[maxch_]       = 1.0e9*waveform->time_at_frac(wave_max.time_at_max-chRec->GetCFDWindowLo(),
+							     wave_max.time_at_max,
+							     0.3,
+							     wave_max,
 								 chRec->GetSamplesToInterpolateForCFD());
-      
-      //similar for 50% of the max
-      t_max_frac50_[maxch_]       = 1.0e9*waveform->time_at_frac(wave_max.time_at_max-chRec->GetCFDWindowLo(),
-								 wave_max.time_at_max,
-								 0.5,
-								 wave_max,
-								 chRec->GetSamplesToInterpolateForCFD());
-
-      //time estimate at fixed value (only if max is above threshold)
-      t_at_threshold_[maxch_] = -999;
-      if(wave_max.max_amplitude>chRec->GetThrForTiming())
+  
+  //similar for 50% of the max
+  t_max_frac50_[maxch_]       = 1.0e9*waveform->time_at_frac(wave_max.time_at_max-chRec->GetCFDWindowLo(),
+							     wave_max.time_at_max,
+							     0.5,
+							     wave_max,
+							     chRec->GetSamplesToInterpolateForCFD());
+  
+  //time estimate at fixed value (only if max is above threshold)
+  t_at_threshold_[maxch_] = -999;
+  if(wave_max.max_amplitude>chRec->GetThrForTiming())
 	{
 	  std::vector<float> crossingTimes = waveform->time_at_threshold(chRec->GetSearchWindowLo(),
 									 chRec->GetSearchWindowUp(),
@@ -197,7 +221,7 @@ void H4treeReco::FillWaveforms()
 	  t_at_threshold_[maxch_]   = 1.0e9*(crossingTimes.size()>0 ? crossingTimes[0] : -999);
 	  t_over_threshold_[maxch_] = 1.0e9*(crossingTimes.size()>1 ? crossingTimes[1]-crossingTimes[0] : -999);
 	}
-    }
+  maxch_++;
 }
 
 

@@ -21,10 +21,13 @@ class H4treeReco : public H4tree
   ~H4treeReco();
   
  private:
+  typedef std::pair<int,int>         GroupChannelKey_t;
+  std::map<GroupChannelKey_t,ChannelReco*> chPlots_;
 
   JSONWrapper::Object *cfg_;
   void InitDigi();
-  
+  void reconstructWaveform(GroupChannelKey_t key);
+
   inline float timeSampleUnit(int drs4Freq)
   {
     if (drs4Freq == 0)
@@ -36,8 +39,7 @@ class H4treeReco : public H4tree
     return -999.;
   }
 
-  typedef std::pair<UInt_t,UInt_t>         GroupChannelKey_t;
-  std::map<GroupChannelKey_t,ChannelReco*> chPlots_;
+  GroupChannelKey_t trigger_;
 
   //TDC readings
   UInt_t MaxTdcChannels_,MaxTdcReadings_;
