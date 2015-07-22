@@ -183,8 +183,8 @@ dirList=(/store/group/dpg_ecal/alca_ecalcalib/TimingTB_H2_Jul2015/raw/DataTree/3
     /store/group/dpg_ecal/alca_ecalcalib/TimingTB_H2_Jul2015/raw/DataTree/3380
     /store/group/dpg_ecal/alca_ecalcalib/TimingTB_H2_Jul2015/raw/DataTree/3381)
 
-for i in ${a[@]}; do 
-    python scripts/runH4treeReco.py -i ${i} -q 8nh;
+for i in ${dirList[@]}; do 
+    python scripts/runH4treeReco.py -i ${i} -q 2nd;
 done
 
 
