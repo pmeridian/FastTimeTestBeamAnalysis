@@ -30,7 +30,11 @@ H4treeReco::H4treeReco(TChain *tree,JSONWrapper::Object *cfg,TString outUrl) :
   recoT_->Branch("nwc",       &nwc_,      "nwc/i");
   recoT_->Branch("wc_recox",   wc_recox_, "wc_recox[nwc]/F");
   recoT_->Branch("wc_recoy",   wc_recoy_, "wc_recoy[nwc]/F");
-  
+  recoT_->Branch("wc_xl_hits",   wc_xl_hits_, "wc_xl_hits[nwc]/i");
+  recoT_->Branch("wc_xr_hits",   wc_xr_hits_, "wc_xr_hits[nwc]/i");
+  recoT_->Branch("wc_yu_hits",   wc_yu_hits_, "wc_yu_hits[nwc]/i");
+  recoT_->Branch("wc_yd_hits",   wc_yd_hits_, "wc_yd_hits[nwc]/i");
+
   //digitizer channel info
   recoT_->Branch("maxch",               &maxch_,               "maxch/i");
   recoT_->Branch("group",                group_,               "group[maxch]/F");
@@ -38,8 +42,9 @@ H4treeReco::H4treeReco(TChain *tree,JSONWrapper::Object *cfg,TString outUrl) :
   recoT_->Branch("pedestal",             pedestal_,            "pedestal[maxch]/F");
   recoT_->Branch("pedestalRMS",          pedestalRMS_,         "pedestalRMS[maxch]/F");
   recoT_->Branch("wave_max",             wave_max_,            "wave_max[maxch]/F");
-  recoT_->Branch("wave_aroundmax",       wave_aroundmax_,      "wave_aroundmax[maxch][25]/F");
-  recoT_->Branch("time_aroundmax",       time_aroundmax_,      "time_aroundmax[maxch][25]/F");
+  recoT_->Branch("wave_max_aft",         wave_max_aft_,        "wave_max_aft[maxch]/F");
+  recoT_->Branch("wave_aroundmax",       wave_aroundmax_,      "wave_aroundmax[maxch][50]/F");
+  recoT_->Branch("time_aroundmax",       time_aroundmax_,      "time_aroundmax[maxch][50]/F");
   recoT_->Branch("charge_integ",         charge_integ_,        "charge_integ[maxch]/F");
   recoT_->Branch("charge_integ_max",     charge_integ_max_,    "charge_integ_max[maxch]/F");
   recoT_->Branch("t_max",                t_max_,     	       "t_max[maxch]/F");
@@ -87,8 +92,8 @@ void H4treeReco::FillWaveforms()
       it->second->GetWaveform()->clear();
       for(int k=0; k<25; k++) 
 	{
-	  wave_aroundmax_[ictr][k]=0;
-	  time_aroundmax_[ictr][k]=0;
+	  wave_aroundmax_[ictr][k]=-9999;
+	  time_aroundmax_[ictr][k]=-9999;
 	}
     }
 
@@ -124,22 +129,38 @@ void H4treeReco::FillWaveforms()
       //find max amplitude in search window (5 is the number of samples around max for the interpolation)
       Waveform::max_amplitude_informations wave_max=waveform->max_amplitude(chRec->GetSearchWindowLo(),
 									    chRec->GetSearchWindowUp(),
-									    5); 
+									    chRec->GetSamplesToInterpolateAtMax()
+									    ); 
 
+      //find max amplitude in the search window after the max (to check for ringing issues)
+      Waveform::max_amplitude_informations wave_max_aft=waveform->max_amplitude(std::min((int)wave_max.sample_at_max+(int)(chRec->GetSearchWindowAfterLo()/waveform->_times[1]),(int)waveform->_samples.size()),
+										std::min((int)wave_max.sample_at_max+(int)(chRec->GetSearchWindowAfterUp()/waveform->_times[1]),(int)waveform->_samples.size()),		  
+										chRec->GetSamplesToInterpolateAtMax()); 
+      
       //fill information for the reco tree
       group_[maxch_]              = it->first.first;
       ch_[maxch_]                 = it->first.second;
       pedestal_[maxch_]           = wave_pedestal.pedestal;
       pedestalRMS_[maxch_]        = wave_pedestal.rms;
       wave_max_[maxch_]           = wave_max.max_amplitude;
+      wave_max_aft_[maxch_]           = wave_max_aft.max_amplitude; //for studying ringing issues after the samples
       t_max_[maxch_]              = wave_max.time_at_max*1.e9;
       for(int i=chRec->GetSpyWindowLo(); i<=chRec->GetSpyWindowUp(); i++)
 	{
 	  int idx2store = i-chRec->GetSpyWindowLo();
 	  int idx       = wave_max.sample_at_max+i;
-	  float val( (idx>=0 && idx<(int)waveform->_samples.size()) ? waveform->_samples[idx] : 0. );
-	  wave_aroundmax_[maxch_][idx2store]=val;
-	  time_aroundmax_[maxch_][idx2store]=waveform->_times[idx];
+	  float val( (idx>=0 && idx<(int)waveform->_samples.size()) ? waveform->_samples[idx] : -9999. );
+	  if (val > -9999)
+	    {
+	      wave_aroundmax_[maxch_][idx2store]=val;
+	      time_aroundmax_[maxch_][idx2store]=waveform->_times[idx];
+	    }
+	  else
+	    {
+	      wave_aroundmax_[maxch_][idx2store]=-9999;
+	      time_aroundmax_[maxch_][idx2store]=-9999;
+	    }
+
 	}
       
       //charge integrated
@@ -156,23 +177,23 @@ void H4treeReco::FillWaveforms()
 								 wave_max.time_at_max,
 								 0.3,
 								 wave_max,
-								 7);
+								 chRec->GetSamplesToInterpolateForCFD());
       
       //similar for 50% of the max
       t_max_frac50_[maxch_]       = 1.0e9*waveform->time_at_frac(wave_max.time_at_max-chRec->GetCFDWindowLo(),
 								 wave_max.time_at_max,
 								 0.5,
 								 wave_max,
-								 7);
+								 chRec->GetSamplesToInterpolateForCFD());
 
       //time estimate at fixed value (only if max is above threshold)
       t_at_threshold_[maxch_] = -999;
       if(wave_max.max_amplitude>chRec->GetThrForTiming())
 	{
-	  std::vector<float> crossingTimes = waveform->time_at_threshold(wave_max.time_at_max-chRec->GetCFDWindowLo(),
-									 wave_max.time_at_max,
+	  std::vector<float> crossingTimes = waveform->time_at_threshold(chRec->GetSearchWindowLo(),
+									 chRec->GetSearchWindowUp(),
 									 chRec->GetThrForTiming(),
-									 5);
+									 chRec->GetSamplesToInterpolateForTD());
 	  t_at_threshold_[maxch_]   = 1.0e9*(crossingTimes.size()>0 ? crossingTimes[0] : -999);
 	  t_over_threshold_[maxch_] = 1.0e9*(crossingTimes.size()>1 ? crossingTimes[1]-crossingTimes[0] : -999);
 	}
@@ -230,6 +251,15 @@ void H4treeReco::FillTDC()
   //compute average positions
   for(UInt_t iwc=0; iwc<nwc_; iwc++)
     {
+      //default values in case no tdc data available
+      wc_recox_[iwc]=-999;
+      wc_recoy_[iwc]=-999;
+
+      wc_xl_hits_[iwc]=tdc_readings_[wcXl_[iwc]].size();
+      wc_xr_hits_[iwc]=tdc_readings_[wcXr_[iwc]].size();
+      wc_yu_hits_[iwc]=tdc_readings_[wcYu_[iwc]].size();
+      wc_yd_hits_[iwc]=tdc_readings_[wcYd_[iwc]].size();
+
       if (tdc_readings_[wcXl_[iwc]].size()!=0 && tdc_readings_[wcXr_[iwc]].size()!=0){
 	float TXl = *std::min_element(tdc_readings_[wcXl_[iwc]].begin(),tdc_readings_[wcXl_[iwc]].begin()+tdc_readings_[wcXl_[iwc]].size());
 	float TXr = *std::min_element(tdc_readings_[wcXr_[iwc]].begin(),tdc_readings_[wcXr_[iwc]].begin()+tdc_readings_[wcXr_[iwc]].size());
