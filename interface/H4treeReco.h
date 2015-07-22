@@ -48,9 +48,8 @@ class H4treeReco : public H4tree
   UInt_t wc_xl_hits_[16], wc_xr_hits_[16], wc_yu_hits_[16], wc_yd_hits_[16]; 
   UInt_t nwc_,wcXl_[4],wcXr_[4],wcYu_[4],wcYd_[4];
 
-
-
   //Channels to RECO
+  TH1F *recChannelsH_; 
   UInt_t nActiveDigitizerChannels_;
   UInt_t maxch_;
   Float_t group_[100],ch_[100];

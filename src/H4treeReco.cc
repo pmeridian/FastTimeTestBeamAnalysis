@@ -61,6 +61,7 @@ void H4treeReco::InitDigi()
   //init channels of interest
   std::vector<JSONWrapper::Object> digis=(*cfg_)["digis"].daughters();
   trigger_=std::pair<int,int>(-1,-1);
+  recChannelsH_=new TH1F("recChannels",";Channel name;Index",digis.size(),0,digis.size());
   for(size_t i=0; i<digis.size(); i++)
     {
       //add a ChannelPlot class for the reconstruction
@@ -70,6 +71,8 @@ void H4treeReco::InitDigi()
       chPlots_[key]->SetWaveform( new Waveform() );
       if (chRec->GetName() == "Trigger" )
 	  trigger_=key;
+      recChannelsH_->GetXaxis()->SetBinLabel(i+1,chRec->GetName());
+      recChannelsH_->SetBinContent(i+1,i);
     }
 
   //init wire chambers readout
@@ -302,6 +305,8 @@ H4treeReco::~H4treeReco()
 {
   fOut_->cd();
   recoT_->Write();
+  recChannelsH_->SetDirectory(fOut_);
+  recChannelsH_->Write();
   for(std::map<GroupChannelKey_t,ChannelReco*>::iterator it=chPlots_.begin();
       it!=chPlots_.end();
       it++)
