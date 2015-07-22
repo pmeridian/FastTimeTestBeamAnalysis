@@ -38,14 +38,16 @@ def main():
     (opt, args) = parser.parse_args()
 
     #build list of input files
+    inputList=opt.input.split(',')
     fileList=[]
-    if opt.input.endswith('.root'):
-        fileList=[opt.input]
-    else:
-        listCmd='ls %s | grep -ir .root' % opt.input
-        if '/store/' in opt.input:
-            listCmd='cmsLs %s | awk \'{print $5}\'' % opt.input
-        fileList=commands.getstatusoutput(listCmd)[1].split()
+    for i in inputList:
+        if i.endswith('.root'):
+            fileList.append(opt.input)
+        else:
+            listCmd='ls %s | grep -ir .root' % i
+            if '/store/' in i :
+                listCmd='cmsLs %s | awk \'{print $5}\'' % i
+            fileList=commands.getstatusoutput(listCmd)[1].split()
 
     #build list of tasks
     inputUrl=''
@@ -59,12 +61,12 @@ def main():
     baseInputDir=os.path.dirname(f)
     localOutputPrefix=''       if len(baseInputDir)==0 else os.path.basename(os.path.dirname(f))
     localOutputPostfix='.root' if len(fileList)>1      else '_'+os.path.basename(fileList[0])
-    localOutput='RECO_%s%s' % ( localOutputPrefix,localOutputPostfix )
+    localOutput='/tmp/RECO_%s%s' % ( localOutputPrefix,localOutputPostfix )
 
     #prepare output
     prepareCmd = 'cmsMkdir' if '/store/' in opt.output else 'mkdir -p'
     commands.getstatusoutput('%s %s' % (prepareCmd,opt.output) )
-    stageCmd   = 'cmsStage' if '/store/' in opt.output else 'cp'
+    stageCmd   = 'cmsStage -f' if '/store/' in opt.output else 'cp'
         
     #run or submit tasks
     if opt.queue=='local':
@@ -77,7 +79,7 @@ def main():
                   )
     else:
         scriptRealPath=os.path.realpath(sys.argv[0])
-        os.system('bsub -q %s %s -o %s -i %s --base %s -c %s -q local'%(opt.queue,scriptRealPath,opt.output,inputUrl,opt.cfg,opt.base))
+        os.system('bsub -q %s %s -o %s -i %s --base %s -c %s -q local'%(opt.queue,scriptRealPath,opt.output,inputUrl,opt.base,opt.cfg))
         
     return 0
 
