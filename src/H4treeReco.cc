@@ -47,6 +47,7 @@ H4treeReco::H4treeReco(TChain *tree,JSONWrapper::Object *cfg,TString outUrl) :
   recoT_->Branch("time_aroundmax",       time_aroundmax_,      "time_aroundmax[maxch][50]/F");
   recoT_->Branch("charge_integ",         charge_integ_,        "charge_integ[maxch]/F");
   recoT_->Branch("charge_integ_max",     charge_integ_max_,    "charge_integ_max[maxch]/F");
+  recoT_->Branch("charge_integ_fix",     charge_integ_fix_,    "charge_integ_fix[maxch]/F");
   recoT_->Branch("t_max",                t_max_,     	       "t_max[maxch]/F");
   recoT_->Branch("t_max_frac30",         t_max_frac30_,        "t_max_frac30[maxch]/F");
   recoT_->Branch("t_max_frac50",         t_max_frac50_,        "t_max_frac50[maxch]/F");
@@ -188,11 +189,12 @@ void H4treeReco::reconstructWaveform(GroupChannelKey_t key)
     }
   
   //charge integrated
-  charge_integ_[maxch_]       = waveform->charge_integrated(wave_max.sample_at_max-chRec->GetCFDWindowLo()/waveform->_times[1],
-							    wave_max.sample_at_max+2*chRec->GetCFDWindowLo()/waveform->_times[1]);
+  charge_integ_[maxch_]       = waveform->charge_integrated(wave_max.sample_at_max-chRec->GetChargeWindowLo()/waveform->_times[1],
+							    wave_max.sample_at_max+chRec->GetChargeWindowUp()/waveform->_times[1]);
+
   
   //charge integrated up to the max
-  charge_integ_max_[maxch_]   = waveform->charge_integrated(wave_max.sample_at_max-chRec->GetCFDWindowLo()/waveform->_times[1],
+  charge_integ_max_[maxch_]   = waveform->charge_integrated(wave_max.sample_at_max-chRec->GetChargeWindowLo()/waveform->_times[1],
 							    wave_max.sample_at_max);
   
   //interpolates the wave form in a time range to find the time at 30% of the max
@@ -221,6 +223,9 @@ void H4treeReco::reconstructWaveform(GroupChannelKey_t key)
 	  t_at_threshold_[maxch_]   = 1.0e9*(crossingTimes.size()>0 ? crossingTimes[0] : -999);
 	  t_over_threshold_[maxch_] = 1.0e9*(crossingTimes.size()>1 ? crossingTimes[1]-crossingTimes[0] : -999);
 	}
+
+  charge_integ_fix_[maxch_]       = waveform->charge_integrated((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta()-chRec->GetChargeWindowLo()*1E9)/(waveform->_times[1]*1E9),(t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta()+chRec->GetChargeWindowUp()*1E9)/(waveform->_times[1]*1E9));
+
   maxch_++;
 }
 

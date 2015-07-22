@@ -48,6 +48,9 @@ public:
   Float_t GetCFDWindowLo()                                    { return cfdWindowLo_; }
   Float_t GetSearchWindowAfterLo()                            { return searchWindowAfterLo_; }
   Float_t GetSearchWindowAfterUp()                            { return searchWindowAfterUp_; }
+  Float_t GetChargeWindowLo()                                 { return chargeWindowLo_; };                
+  Float_t GetChargeWindowUp()                                 { return chargeWindowUp_; };                
+  Float_t GetAbsoluteTimeDelta()                              { return absoluteTimeDelta_; };                
   Float_t GetThrForTiming()                                   { return thrForTiming_; }
   Waveform *GetWaveform()                                     { return waveform_; }
   TH1F *GetConfigSummary()                                    { return chRecoCfgH_; }
@@ -63,6 +66,7 @@ public:
   Int_t group_, module_,searchWindowUp_,searchWindowLo_,spyWindowLo_,spyWindowUp_;
   Float_t cfdWindowLo_;
   Float_t searchWindowAfterLo_, searchWindowAfterUp_;
+  Float_t chargeWindowUp_, chargeWindowLo_, absoluteTimeDelta_;
   Int_t searchWindowTriggerRelative_;
   Int_t thrForPulseInversion_,pedestalWindowLo_,pedestalWindowUp_;
   Int_t samplesToInterpolateAtMax_,samplesToInterpolateForCFD_,samplesToInterpolateForTD_;

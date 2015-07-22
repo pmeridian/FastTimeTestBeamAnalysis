@@ -17,6 +17,9 @@ ChannelReco::ChannelReco(JSONWrapper::Object &cfg, PlotType ptype, Bool_t doPlot
   searchWindowTriggerRelative_ = cfg["searchWindowTriggerRelative"].toInt();
   searchWindowAfterUp_       = cfg["searchWindowAfterUp"].toDouble();
   searchWindowAfterLo_       = cfg["searchWindowAfterLo"].toDouble();
+  chargeWindowLo_       = cfg["chargeWindowLo"].toDouble();
+  chargeWindowUp_       = cfg["chargeWindowUp"].toDouble();
+  absoluteTimeDelta_       = cfg["absoluteTimeDelta"].toDouble();
   spyWindowUp_       = cfg["spyWindowUp"].toInt();
   spyWindowLo_       = cfg["spyWindowLo"].toInt();
   cfdWindowLo_       = cfg["cfdWindowLo"].toDouble();
@@ -28,7 +31,7 @@ ChannelReco::ChannelReco(JSONWrapper::Object &cfg, PlotType ptype, Bool_t doPlot
   samplesToInterpolateForCFD_ = cfg["samplesToInterpolateForCFD"].toInt();
   samplesToInterpolateForTD_ = cfg["samplesToInterpolateForTD"].toInt();
   //save configuration values in a histogram
-  chRecoCfgH_ = new TH1F(name_+"_cfg",";"+name_+";Value",18,0,18);
+  chRecoCfgH_ = new TH1F(name_+"_cfg",";"+name_+";Value",21,0,21);
   chRecoCfgH_->SetDirectory(0);
   chRecoCfgH_->SetBinContent(1,group_);                  chRecoCfgH_->GetXaxis()->SetBinLabel(1,"group");
   chRecoCfgH_->SetBinContent(2,module_);                 chRecoCfgH_->GetXaxis()->SetBinLabel(2,"channel");
@@ -47,6 +50,9 @@ ChannelReco::ChannelReco(JSONWrapper::Object &cfg, PlotType ptype, Bool_t doPlot
   chRecoCfgH_->SetBinContent(15,samplesToInterpolateForCFD_);       chRecoCfgH_->GetXaxis()->SetBinLabel(15,"samplesToInterpolateForMax");
   chRecoCfgH_->SetBinContent(16,samplesToInterpolateForTD_);       chRecoCfgH_->GetXaxis()->SetBinLabel(16,"samplesToInterpolateForTD");
   chRecoCfgH_->SetBinContent(17,searchWindowTriggerRelative_);       chRecoCfgH_->GetXaxis()->SetBinLabel(17,"searchWindowTriggerRelative");
+  chRecoCfgH_->SetBinContent(18,chargeWindowLo_);       chRecoCfgH_->GetXaxis()->SetBinLabel(18,"chargeWindowLo");
+  chRecoCfgH_->SetBinContent(19,chargeWindowLo_);       chRecoCfgH_->GetXaxis()->SetBinLabel(19,"chargeWindowLo");
+  chRecoCfgH_->SetBinContent(20,absoluteTimeDelta_);       chRecoCfgH_->GetXaxis()->SetBinLabel(19,"absoluteTimeDelta");
 
   //  std::cout << "\t " << name_ << " will be reconstructed from group=" << group_ << " channel=" << module_ << std::endl;
   Print();
@@ -73,6 +79,9 @@ void ChannelReco::Print()
   std::cout << "Samples to interpolate at MAX\t" << this->GetSamplesToInterpolateAtMax() << std::endl;
   std::cout << "Samples to interpolate for CFD\t" << this->GetSamplesToInterpolateForCFD() << std::endl;
   std::cout << "Samples to interpolate for TD\t" << this->GetSamplesToInterpolateForTD() << std::endl;
+  std::cout << "Charge WindowLo\t" << this->GetChargeWindowLo() << std::endl;
+  std::cout << "Charge WindowUp\t" << this->GetChargeWindowUp() << std::endl;
+  std::cout << "Absolute Delta Time (wrt Trigger)\t" << this->GetAbsoluteTimeDelta() << std::endl;
 }
 //
 void ChannelReco::Fill(float valX, float valY, int i) 
