@@ -38,6 +38,7 @@ public:
   Int_t GetPedestalWindowUp()                                 { return pedestalWindowUp_; }
   Int_t GetSearchWindowUp()                                   { return searchWindowUp_; }
   Int_t GetSearchWindowLo()                                   { return searchWindowLo_; }  
+  Int_t GetSearchWindowTriggerRelative()                      { return searchWindowTriggerRelative_; }  
   Int_t GetSpyWindowLo()                                      { return spyWindowLo_; }
   Int_t GetSpyWindowUp()                                      { return spyWindowUp_; }
   Int_t GetSamplesToInterpolateAtMax()                        { return samplesToInterpolateAtMax_; } 
@@ -62,6 +63,7 @@ public:
   Int_t group_, module_,searchWindowUp_,searchWindowLo_,spyWindowLo_,spyWindowUp_;
   Float_t cfdWindowLo_;
   Float_t searchWindowAfterLo_, searchWindowAfterUp_;
+  Int_t searchWindowTriggerRelative_;
   Int_t thrForPulseInversion_,pedestalWindowLo_,pedestalWindowUp_;
   Int_t samplesToInterpolateAtMax_,samplesToInterpolateForCFD_,samplesToInterpolateForTD_;
   Float_t thrForTiming_;
