@@ -53,6 +53,7 @@ public:
   Float_t GetChargeWindowUp()                                 { return chargeWindowUp_; };                
   Float_t GetAbsoluteTimeDelta()                              { return absoluteTimeDelta_; };                
   Float_t GetThrForTiming()                                   { return thrForTiming_; }
+  Float_t GetMCPTimeDelta()                                   { return mcpTimeDelta_; }
   Waveform *GetWaveform()                                     { return waveform_; }
   TH1F *GetConfigSummary()                                    { return chRecoCfgH_; }
   void SetWaveform(Waveform *w)                               { waveform_=w; }
@@ -73,6 +74,7 @@ public:
   Int_t thrForPulseInversion_,pedestalWindowLo_,pedestalWindowUp_;
   Int_t samplesToInterpolateAtMax_,samplesToInterpolateForCFD_,samplesToInterpolateForTD_;
   Float_t thrForTiming_;
+  Float_t mcpTimeDelta_;
   int ptype_;
   bool doPlot_, doProfile_;
   TString name_;

@@ -51,6 +51,7 @@ H4treeReco::H4treeReco(TChain *tree,JSONWrapper::Object *cfg,TString outUrl) :
   recoT_->Branch("charge_integ_max",     charge_integ_max_,    "charge_integ_max[maxch]/F");
   recoT_->Branch("charge_integ_fix",     charge_integ_fix_,    "charge_integ_fix[maxch]/F");
   recoT_->Branch("charge_integ_smallw",  charge_integ_smallw_, "charge_integ_smallw[maxch]/F");
+  recoT_->Branch("charge_integ_smallw_mcp",  charge_integ_smallw_mcp_, "charge_integ_smallw_mcp[maxch]/F");
   recoT_->Branch("charge_integ_smallw_noise",  charge_integ_smallw_noise_, "charge_integ_smallw_noise[maxch]/F");
   recoT_->Branch("t_max",                t_max_,     	       "t_max[maxch]/F");
   recoT_->Branch("t_max_frac30",         t_max_frac30_,        "t_max_frac30[maxch]/F");
@@ -247,6 +248,13 @@ void H4treeReco::reconstructWaveform(GroupChannelKey_t key)
 #endif
 
   charge_integ_smallw_[maxch_]       = waveform->charge_integrated((int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta())/(waveform->_times[1]*1E9))-((chRec->GetSmallChargeWindowsSize()-1)/2),(int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta())/(waveform->_times[1]*1E9))+((chRec->GetSmallChargeWindowsSize()-1)/2));
+
+  if (chRec->GetMCPTimeDelta()!=0)
+    {
+      charge_integ_smallw_mcp_[maxch_] = waveform->charge_integrated((int)((t_max_[1]+chRec->GetMCPTimeDelta())/(waveform->_times[1]*1E9))-((chRec->GetSmallChargeWindowsSize()-1)/2),(int)((t_max_[1]+chRec->GetMCPTimeDelta())/(waveform->_times[1]*1E9))+((chRec->GetSmallChargeWindowsSize()-1)/2));
+    }
+  else
+    charge_integ_smallw_mcp_[maxch_]=-9999;
 
   charge_integ_smallw_noise_[maxch_]       = waveform->charge_integrated((int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta()-35)/(waveform->_times[1]*1E9))-((chRec->GetSmallChargeWindowsSize()-1)/2),(int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta()-35)/(waveform->_times[1]*1E9))+((chRec->GetSmallChargeWindowsSize()-1)/2));
 

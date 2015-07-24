@@ -1,27 +1,27 @@
 {
   gStyle->SetOptFit(111111);
-  TFile *_file0 = TFile::Open("/tmp/meridian/RECO_3375_old.root");
-  H4treeReco->Draw("charge_integ_fix[3]>>pedestal(250,-1000,1000)","wc_xl_hits[0]==0 && wc_xr_hits[0]==0 && wc_xl_hits[1]==0 && wc_xr_hits[1]==0 && wc_yu_hits[1]==0 && wc_yd_hits[1]==0");
+  TFile *_file0 = TFile::Open("/tmp/meridian/RECO_3375.root");
+  H4treeReco->Draw("charge_integ_smallw[3]>>pedestal(250,-200,200)","wc_xl_hits[0]==0 && wc_xr_hits[0]==0 && wc_xl_hits[1]==0 && wc_xr_hits[1]==0 && wc_yu_hits[1]==0 && wc_yd_hits[1]==0");
   TH1F* pedestal=(TH1F*)gROOT->FindObject("pedestal");
   pedestal->Fit("gaus");
   c1->SaveAs("noise.png");
-  H4treeReco->Draw(Form("charge_integ_fix[3]-%4.1f>>noise_corrected(250,-1000,1000)",pedestal->GetFunction("gaus")->GetParameter(1)),"wc_xl_hits[0]==0 && wc_xr_hits[0]==0 && wc_xl_hits[1]==0 && wc_xr_hits[1]==0 && wc_yu_hits[1]==0 && wc_yd_hits[1]==0");
+  H4treeReco->Draw(Form("charge_integ_smallw[3]-%4.1f>>noise_corrected(250,-200,200)",pedestal->GetFunction("gaus")->GetParameter(1)),"wc_xl_hits[0]==0 && wc_xr_hits[0]==0 && wc_xl_hits[1]==0 && wc_xr_hits[1]==0 && wc_yu_hits[1]==0 && wc_yd_hits[1]==0");
   TH1F* noise_corrected=(TH1F*)gROOT->FindObject("noise_corrected");
   noise_corrected->Fit("gaus");
   c1->SaveAs("noise_corrected.png");
-  H4treeReco->Draw(Form("charge_integ_fix[2]-%4.1f>>signal1(250,-1000,5000)",pedestal->GetFunction("gaus")->GetParameter(1)),"wave_max[1]>200 && abs(t_max[3]-t_max[1]+5.7)<0.4 && wave_max[3]>35"); 
-  H4treeReco->Draw(Form("charge_integ_fix[3]-%4.1f>>signal2(250,-1000,5000)",pedestal->GetFunction("gaus")->GetParameter(1)),"wave_max[1]>200 && abs(t_max[2]-t_max[1]+5.7)<0.4 && wave_max[2]>35"); 
-  // H4treeReco->Draw(Form("charge_integ_fix[2]-%4.1f>>signal1(250,-1000,5000)",pedestal->GetFunction("gaus")->GetParameter(1)),"wave_max[1]<100 && abs(t_max[3]-t_max[1]+5.7)>4 && wave_max[3]<100"); 
-  // H4treeReco->Draw(Form("charge_integ_fix[3]-%4.1f>>signal2(250,-1000,5000)",pedestal->GetFunction("gaus")->GetParameter(1)),"wave_max[1]<100 && abs(t_max[2]-t_max[1]+5.7)>4 && wave_max[2]<100"); 
+  H4treeReco->Draw(Form("charge_integ_smallw[2]-%4.1f>>signal1(250,-200,1000)",pedestal->GetFunction("gaus")->GetParameter(1)),"wave_max[1]>200 && abs(t_max[3]-t_max[1]+5.7)<0.4 && wave_max[3]>35"); 
+  H4treeReco->Draw(Form("charge_integ_smallw[3]-%4.1f>>signal2(250,-200,1000)",pedestal->GetFunction("gaus")->GetParameter(1)),"wave_max[1]>200 && abs(t_max[2]-t_max[1]+5.7)<0.4 && wave_max[2]>35"); 
+  // H4treeReco->Draw(Form("charge_integ_smallw[2]-%4.1f>>signal1(250,-1000,5000)",pedestal->GetFunction("gaus")->GetParameter(1)),"wave_max[1]<100 && abs(t_max[3]-t_max[1]+5.7)>4 && wave_max[3]<100"); 
+  // H4treeReco->Draw(Form("charge_integ_smallw[3]-%4.1f>>signal2(250,-1000,5000)",pedestal->GetFunction("gaus")->GetParameter(1)),"wave_max[1]<100 && abs(t_max[2]-t_max[1]+5.7)>4 && wave_max[2]<100"); 
 
   TH1F* signal1=(TH1F*)gROOT->FindObject("signal1");
   TH1F* signal2=(TH1F*)gROOT->FindObject("signal2");
   TH1F* signal=signal2->Clone("signal");
   signal->Sumw2();
   signal->Add(signal1);
-  //H4treeReco->Draw(Form("charge_integ_fix[3]-%4.1f>>signal(250,-500,5000)",pedestal->GetFunction("gaus")->GetParameter(1)),"wave_max[1]>200"); 
+  //H4treeReco->Draw(Form("charge_integ_smallw[3]-%4.1f>>signal(250,-500,5000)",pedestal->GetFunction("gaus")->GetParameter(1)),"wave_max[1]>200"); 
   gROOT->ProcessLine(".L ~/work/H2_2015/FastTimeTestBeamAnalysis/macros/fitFunctions.C++");
-  TF1* fitFunc=new TF1("fitFunc",sigFunc,-1000,5000,7);
+  TF1* fitFunc=new TF1("fitFunc",sigFunc,-200,1000,7);
   fitFunc->FixParameter(1,0.);
   fitFunc->FixParameter(2,pedestal->GetFunction("gaus")->GetParameter(2));
   fitFunc->SetParLimits(0,0,100000);
@@ -47,13 +47,13 @@
   fitFunc->Draw("SAME");
   Double_t fitparams[7];
   fitFunc->GetParameters(fitparams);
-  TF1 *landau= new TF1("landau",lanconvgau,-1000,5000,4);
+  TF1 *landau= new TF1("landau",lanconvgau,-200,1000,4);
   landau->SetParameters(&fitparams[3]);
   landau->SetLineColor(kBlue);
   landau->SetLineStyle(2);
   landau->Draw("SAME");
 
-  TF1 *noi=new TF1("noi","gaus",-1000,5000);
+  TF1 *noi=new TF1("noi","gaus",-200,1000);
   noi->SetParameter(0,fitparams[0]);
   noi->SetParameter(1,fitparams[1]);
   noi->SetParameter(2,fitparams[2]);
