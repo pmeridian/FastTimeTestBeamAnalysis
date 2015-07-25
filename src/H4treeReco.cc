@@ -55,7 +55,9 @@ H4treeReco::H4treeReco(TChain *tree,JSONWrapper::Object *cfg,TString outUrl) :
   recoT_->Branch("charge_integ_smallw_mcp",  charge_integ_smallw_mcp_, "charge_integ_smallw_mcp[maxch]/F");
   recoT_->Branch("charge_integ_largew_mcp",  charge_integ_largew_mcp_, "charge_integ_largew_mcp[maxch]/F");
   recoT_->Branch("charge_integ_smallw_noise",  charge_integ_smallw_noise_, "charge_integ_smallw_noise[maxch]/F");
-  recoT_->Branch("charge_integ_largew_noise",  charge_integ_smallw_noise_, "charge_integ_largew_noise[maxch]/F");
+  recoT_->Branch("charge_integ_largew_noise",  charge_integ_largew_noise_, "charge_integ_largew_noise[maxch]/F");
+  recoT_->Branch("charge_integ_smallw_rnd",  charge_integ_smallw_rnd_, "charge_integ_smallw_rnd[maxch]/F");
+  recoT_->Branch("charge_integ_largew_rnd",  charge_integ_largew_rnd_, "charge_integ_largew_rnd[maxch]/F");
   recoT_->Branch("t_max",                t_max_,     	       "t_max[maxch]/F");
   recoT_->Branch("t_max_frac30",         t_max_frac30_,        "t_max_frac30[maxch]/F");
   recoT_->Branch("t_max_frac50",         t_max_frac50_,        "t_max_frac50[maxch]/F");
@@ -266,6 +268,19 @@ void H4treeReco::reconstructWaveform(GroupChannelKey_t key)
 
   charge_integ_smallw_noise_[maxch_]       = waveform->charge_integrated((int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta()-35)/(waveform->_times[1]*1E9))-((chRec->GetSmallChargeWindowsSize()-1)/2),(int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta()-35)/(waveform->_times[1]*1E9))+((chRec->GetSmallChargeWindowsSize()-1)/2));
   charge_integ_largew_noise_[maxch_]       = waveform->charge_integrated((int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta()-35)/(waveform->_times[1]*1E9))-((chRec->GetLargeChargeWindowsSize()-1)/2),(int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta()-35)/(waveform->_times[1]*1E9))+((chRec->GetLargeChargeWindowsSize()-1)/2));
+
+  charge_integ_smallw_rnd_[maxch_]=0;
+  charge_integ_largew_rnd_[maxch_]=0;
+  for (int i=0;i<chRec->GetSmallChargeWindowsSize();++i)
+    {
+      int irnd=(int)gRandom->Uniform(900);
+      charge_integ_smallw_rnd_[maxch_] += waveform->charge_integrated(irnd,irnd);
+    }
+  for (int i=0;i<chRec->GetLargeChargeWindowsSize();++i)
+    {
+      int irnd=(int)gRandom->Uniform(900);
+      charge_integ_largew_rnd_[maxch_] += waveform->charge_integrated(irnd,irnd);
+    }
 
   maxch_++;
 }
