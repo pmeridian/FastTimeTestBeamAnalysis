@@ -5,6 +5,8 @@
 
 #include <iostream>
 
+//#define DEBUG_VERBOSE
+
 //
 H4treeReco::H4treeReco(TChain *tree,JSONWrapper::Object *cfg,TString outUrl) : 
   H4tree(tree),
@@ -48,6 +50,14 @@ H4treeReco::H4treeReco(TChain *tree,JSONWrapper::Object *cfg,TString outUrl) :
   recoT_->Branch("charge_integ",         charge_integ_,        "charge_integ[maxch]/F");
   recoT_->Branch("charge_integ_max",     charge_integ_max_,    "charge_integ_max[maxch]/F");
   recoT_->Branch("charge_integ_fix",     charge_integ_fix_,    "charge_integ_fix[maxch]/F");
+  recoT_->Branch("charge_integ_smallw",  charge_integ_smallw_, "charge_integ_smallw[maxch]/F");
+  recoT_->Branch("charge_integ_largew",  charge_integ_largew_, "charge_integ_largew[maxch]/F");
+  recoT_->Branch("charge_integ_smallw_mcp",  charge_integ_smallw_mcp_, "charge_integ_smallw_mcp[maxch]/F");
+  recoT_->Branch("charge_integ_largew_mcp",  charge_integ_largew_mcp_, "charge_integ_largew_mcp[maxch]/F");
+  recoT_->Branch("charge_integ_smallw_noise",  charge_integ_smallw_noise_, "charge_integ_smallw_noise[maxch]/F");
+  recoT_->Branch("charge_integ_largew_noise",  charge_integ_largew_noise_, "charge_integ_largew_noise[maxch]/F");
+  recoT_->Branch("charge_integ_smallw_rnd",  charge_integ_smallw_rnd_, "charge_integ_smallw_rnd[maxch]/F");
+  recoT_->Branch("charge_integ_largew_rnd",  charge_integ_largew_rnd_, "charge_integ_largew_rnd[maxch]/F");
   recoT_->Branch("t_max",                t_max_,     	       "t_max[maxch]/F");
   recoT_->Branch("t_max_frac30",         t_max_frac30_,        "t_max_frac30[maxch]/F");
   recoT_->Branch("t_max_frac50",         t_max_frac50_,        "t_max_frac50[maxch]/F");
@@ -116,6 +126,11 @@ void H4treeReco::FillWaveforms()
 
   //reconstruct waveforms
   maxch_=0;  
+
+#ifdef DEBUG_VERBOSE
+  std::cout << "+++++" << std::endl;
+#endif
+
   //first reconsruct trigger
   if (trigger_ != std::pair<int,int>(-1,-1))
       reconstructWaveform(trigger_);
@@ -151,10 +166,13 @@ void H4treeReco::reconstructWaveform(GroupChannelKey_t key)
   if (chRec->GetSearchWindowTriggerRelative() && (*it).first != trigger_)
     {
       //When this is enabled, trigger should always be reconstructed always as channel 0
-      searchWindowLo+=(int)((t_at_threshold_[0])/(waveform->_times[1]*1E9));
-      searchWindowUp+=(int)((t_at_threshold_[0])/(waveform->_times[1]*1E9));
+      searchWindowLo+=(int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta())/(waveform->_times[1]*1E9));
+      searchWindowUp+=(int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta())/(waveform->_times[1]*1E9));
     }
-  
+
+#ifdef DEBUG_VERBOSE
+  std::cout << "<< " << searchWindowLo << "," <<  searchWindowUp << ">>" << std::endl;
+#endif  
   Waveform::max_amplitude_informations wave_max=waveform->max_amplitude(searchWindowLo,
 									searchWindowUp,
 									chRec->GetSamplesToInterpolateAtMax()
@@ -176,7 +194,11 @@ void H4treeReco::reconstructWaveform(GroupChannelKey_t key)
   for(int i=chRec->GetSpyWindowLo(); i<=chRec->GetSpyWindowUp(); i++)
     {
       int idx2store = i-chRec->GetSpyWindowLo();
-      int idx       = wave_max.sample_at_max+i;
+      int idx;
+      if (chRec->GetSearchWindowTriggerRelative() && (*it).first != trigger_)
+	idx       = (int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta())/(waveform->_times[1]*1E9))+i;
+      else
+	idx       = wave_max.sample_at_max+i;  
       float val( (idx>=0 && idx<(int)waveform->_samples.size()) ? waveform->_samples[idx] : -9999. );
       if (val > -9999)
 	{
@@ -227,7 +249,41 @@ void H4treeReco::reconstructWaveform(GroupChannelKey_t key)
 	  t_over_threshold_[maxch_] = 1.0e9*(crossingTimes.size()>1 ? crossingTimes[1]-crossingTimes[0] : -999);
 	}
 
-  charge_integ_fix_[maxch_]       = waveform->charge_integrated((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta()-chRec->GetChargeWindowLo()*1E9)/(waveform->_times[1]*1E9),(t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta()+chRec->GetChargeWindowUp()*1E9)/(waveform->_times[1]*1E9));
+  charge_integ_fix_[maxch_]       = waveform->charge_integrated((int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta()-chRec->GetChargeWindowLo()*1E9)/(waveform->_times[1]*1E9)),(int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta()+chRec->GetChargeWindowUp()*1E9)/(waveform->_times[1]*1E9)));
+
+#ifdef DEBUG_VERBOSE
+  std::cout << t_at_threshold_[0] << "," << (int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta())/(waveform->_times[1]*1E9))-((chRec->GetSmallChargeWindowsSize()-1)/2) << "," << (int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta())/(waveform->_times[1]*1E9))+((chRec->GetSmallChargeWindowsSize()-1)/2) << std::endl;
+#endif
+
+  charge_integ_smallw_[maxch_]       = waveform->charge_integrated((int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta())/(waveform->_times[1]*1E9))-((chRec->GetSmallChargeWindowsSize()-1)/2),(int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta())/(waveform->_times[1]*1E9))+((chRec->GetSmallChargeWindowsSize()-1)/2));
+  charge_integ_largew_[maxch_]       = waveform->charge_integrated((int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta())/(waveform->_times[1]*1E9))-((chRec->GetLargeChargeWindowsSize()-1)/2),(int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta())/(waveform->_times[1]*1E9))+((chRec->GetLargeChargeWindowsSize()-1)/2));
+
+  if (chRec->GetMCPTimeDelta()!=0)
+    {
+      charge_integ_smallw_mcp_[maxch_] = waveform->charge_integrated((int)((t_max_[1]+chRec->GetMCPTimeDelta())/(waveform->_times[1]*1E9))-((chRec->GetSmallChargeWindowsSize()-1)/2),(int)((t_max_[1]+chRec->GetMCPTimeDelta())/(waveform->_times[1]*1E9))+((chRec->GetSmallChargeWindowsSize()-1)/2));
+      charge_integ_largew_mcp_[maxch_] = waveform->charge_integrated((int)((t_max_[1]+chRec->GetMCPTimeDelta())/(waveform->_times[1]*1E9))-((chRec->GetLargeChargeWindowsSize()-1)/2),(int)((t_max_[1]+chRec->GetMCPTimeDelta())/(waveform->_times[1]*1E9))+((chRec->GetLargeChargeWindowsSize()-1)/2));
+    }
+  else
+    {
+      charge_integ_smallw_mcp_[maxch_]=-9999;
+      charge_integ_largew_mcp_[maxch_]=-9999;
+    }
+
+  charge_integ_smallw_noise_[maxch_]       = waveform->charge_integrated((int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta()-35)/(waveform->_times[1]*1E9))-((chRec->GetSmallChargeWindowsSize()-1)/2),(int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta()-35)/(waveform->_times[1]*1E9))+((chRec->GetSmallChargeWindowsSize()-1)/2));
+  charge_integ_largew_noise_[maxch_]       = waveform->charge_integrated((int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta()-35)/(waveform->_times[1]*1E9))-((chRec->GetLargeChargeWindowsSize()-1)/2),(int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta()-35)/(waveform->_times[1]*1E9))+((chRec->GetLargeChargeWindowsSize()-1)/2));
+
+  charge_integ_smallw_rnd_[maxch_]=0;
+  charge_integ_largew_rnd_[maxch_]=0;
+  for (int i=0;i<chRec->GetSmallChargeWindowsSize();++i)
+    {
+      int irnd=(int)gRandom->Uniform(900);
+      charge_integ_smallw_rnd_[maxch_] += waveform->charge_integrated(irnd,irnd);
+    }
+  for (int i=0;i<chRec->GetLargeChargeWindowsSize();++i)
+    {
+      int irnd=(int)gRandom->Uniform(900);
+      charge_integ_largew_rnd_[maxch_] += waveform->charge_integrated(irnd,irnd);
+    }
 
   maxch_++;
 }

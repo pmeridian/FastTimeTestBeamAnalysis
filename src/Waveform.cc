@@ -17,7 +17,7 @@ float Waveform::charge_integrated(const int& x1, const int& x2, float pedestal) 
     {
       if (WARNING_ERROR)
 	std::cout << "WARNING::charge_integrated::gate is outside samples range" << std::endl;
-      return return_value;
+      return -9999.;
     }
   
   for (unsigned int i(x1); i<=x2; i++){

@@ -44,6 +44,8 @@ public:
   Int_t GetSamplesToInterpolateAtMax()                        { return samplesToInterpolateAtMax_; } 
   Int_t GetSamplesToInterpolateForCFD()                       { return samplesToInterpolateForCFD_; } 
   Int_t GetSamplesToInterpolateForTD()                       { return samplesToInterpolateForTD_; } 
+  Int_t GetSmallChargeWindowsSize()                           { return smallChargeWindowSize_; };
+  Int_t GetLargeChargeWindowsSize()                           { return largeChargeWindowSize_; };
   //Float
   Float_t GetCFDWindowLo()                                    { return cfdWindowLo_; }
   Float_t GetSearchWindowAfterLo()                            { return searchWindowAfterLo_; }
@@ -52,6 +54,7 @@ public:
   Float_t GetChargeWindowUp()                                 { return chargeWindowUp_; };                
   Float_t GetAbsoluteTimeDelta()                              { return absoluteTimeDelta_; };                
   Float_t GetThrForTiming()                                   { return thrForTiming_; }
+  Float_t GetMCPTimeDelta()                                   { return mcpTimeDelta_; }
   Waveform *GetWaveform()                                     { return waveform_; }
   TH1F *GetConfigSummary()                                    { return chRecoCfgH_; }
   void SetWaveform(Waveform *w)                               { waveform_=w; }
@@ -67,10 +70,13 @@ public:
   Float_t cfdWindowLo_;
   Float_t searchWindowAfterLo_, searchWindowAfterUp_;
   Float_t chargeWindowUp_, chargeWindowLo_, absoluteTimeDelta_;
+  Int_t smallChargeWindowSize_;
+  Int_t largeChargeWindowSize_;
   Int_t searchWindowTriggerRelative_;
   Int_t thrForPulseInversion_,pedestalWindowLo_,pedestalWindowUp_;
   Int_t samplesToInterpolateAtMax_,samplesToInterpolateForCFD_,samplesToInterpolateForTD_;
   Float_t thrForTiming_;
+  Float_t mcpTimeDelta_;
   int ptype_;
   bool doPlot_, doProfile_;
   TString name_;

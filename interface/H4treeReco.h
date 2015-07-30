@@ -6,6 +6,7 @@
 #include "interface/JSONWrapper.h"
 
 #include "TFile.h"
+#include "TRandom.h"
 #include "TString.h"
 
 #include <set>
@@ -55,7 +56,7 @@ class H4treeReco : public H4tree
   Float_t group_[100],ch_[100];
   Float_t pedestal_[100],         pedestalRMS_[100];
   Float_t wave_max_[100], wave_max_aft_[100], wave_aroundmax_[100][50], time_aroundmax_[100][50];
-  Float_t charge_integ_max_[100], charge_integ_fix_[100], charge_integ_max30_[100], charge_integ_max50_[100], charge_integ_[100];
+  Float_t charge_integ_max_[100], charge_integ_fix_[100], charge_integ_max30_[100], charge_integ_max50_[100], charge_integ_[100], charge_integ_smallw_[100] , charge_integ_smallw_mcp_[100] , charge_integ_smallw_noise_[100], charge_integ_largew_[100] , charge_integ_largew_mcp_[100] , charge_integ_largew_noise_[100], charge_integ_smallw_rnd_[100], charge_integ_largew_rnd_[100];
   Float_t t_max_[100],            t_max_frac30_[100],       t_max_frac50_[100],       t_at_threshold_[100], t_over_threshold_[100];
 
   TTree *recoT_;
