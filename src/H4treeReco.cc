@@ -70,6 +70,18 @@ H4treeReco::H4treeReco(TChain *tree,JSONWrapper::Object *cfg,TString outUrl) :
 //
 void H4treeReco::InitDigi()
 {
+  //general config
+  std::vector<JSONWrapper::Object> general=(*cfg_)["general"].daughters();
+  for(size_t i=0; i<general.size(); i++)
+    {
+      fWaveTemplates_= TFile::Open(general[i]["waveTemplates"].toString().c_str());
+      if (!fWaveTemplates_)
+	{
+	  std::cout << "ERROR::Cannot open " << general[i]["waveTemplates"].toString() << std::endl;
+	  exit(-1);
+	}
+    }
+
   //init channels of interest
   std::vector<JSONWrapper::Object> digis=(*cfg_)["digis"].daughters();
   trigger_=std::pair<int,int>(-1,-1);
@@ -85,6 +97,14 @@ void H4treeReco::InitDigi()
 	  trigger_=key;
       recChannelsH_->GetXaxis()->SetBinLabel(i+1,chRec->GetName());
       recChannelsH_->SetBinContent(i+1,i);
+      TProfile* wave=(TProfile*)fWaveTemplates_->Get(Form("%s_waveProfile",chRec->GetName().Data()));
+      if (wave)
+	{
+	  waveTemplates_[i]=wave;
+	  wave->Print();
+	}
+      else
+	waveTemplates_[i]=0;
     }
 
   //init wire chambers readout
@@ -97,6 +117,7 @@ void H4treeReco::InitDigi()
       wcYd_[i]=wcs[i]["d"].toInt();
       wcYu_[i]=wcs[i]["u"].toInt();
     }
+
 }
 
 //

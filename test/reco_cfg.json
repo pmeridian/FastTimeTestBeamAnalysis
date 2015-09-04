@@ -1,4 +1,9 @@
 {
+"general":[
+	{	
+		"waveTemplates":"data/waveTemplates.root"
+	}
+	],
 "wirechambers":[
 	{
 		"name":"WCD",

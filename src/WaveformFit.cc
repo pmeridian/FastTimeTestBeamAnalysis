@@ -118,10 +118,10 @@ namespace WaveformFit
     //     minimizer=min;
   }
 
-  void fitWaveform(Waveform* wave, TProfile* amplitudeProfile, int nSamplesBeforeMax, int nSamplesAfterMax, const Waveform::max_amplitude_informations& max, const Waveform::baseline_informations& waveRms, ROOT::Math::Minimizer* &minimizer)
+  void fitWaveform(Waveform* wave, TProfile* amplitudeProfile, int x1, int x2, const Waveform::max_amplitude_informations& max, const Waveform::baseline_informations& waveRms, ROOT::Math::Minimizer* &minimizer)
   {
-    xMin=max.sample_at_max-nSamplesBeforeMax;
-    xMax=max.sample_at_max+nSamplesAfterMax;
+    xMin=x1;
+    xMax=x2;
 
     waveData=wave;
     fitWave=amplitudeProfile;
@@ -154,7 +154,8 @@ namespace WaveformFit
     //    std::cout << "INIITIAL VALUES " << max.max_amplitude << "," << max.time_at_max*1.e9 << "," << max.sample_at_max << std::endl;
 
     minimizer->SetLimitedVariable(0,"amplitude",max.max_amplitude,1e-2,std::max(0.,(double)max.max_amplitude-500),std::min(4000.,(double)max.max_amplitude+500.));
-    minimizer->SetLimitedVariable(1,"deltaT",max.time_at_max*1.e9,1e-3,max.time_at_max*1.e9-0.5,max.time_at_max*1.e9+0.5);
+    //    minimizer->SetLimitedVariable(1,"deltaT",max.time_at_max*1.e9,1e-3,max.time_at_max*1.e9-0.5,max.time_at_max*1.e9+0.5);
+    minimizer->SetFixedVariable(1,"deltaT",0.);
 
     minimizer->Minimize();
 

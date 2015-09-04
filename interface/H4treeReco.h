@@ -48,6 +48,8 @@ class H4treeReco : public H4tree
   TFile *fOut_;
 
  private:
+  TFile *fWaveTemplates_;
+
   //TDC readings
   UInt_t MaxTdcChannels_,MaxTdcReadings_;
   std::vector< std::vector<Float_t> > tdc_readings_;
@@ -56,7 +58,8 @@ class H4treeReco : public H4tree
   UInt_t nwc_,wcXl_[4],wcXr_[4],wcYu_[4],wcYd_[4];
 
   //Channels to RECO
-  TH1F *recChannelsH_; 
+  TH1F *recChannelsH_;
+  TProfile* waveTemplates_[100];
   UInt_t nActiveDigitizerChannels_;
   UInt_t maxch_;
   Float_t group_[100],ch_[100];
