@@ -43,6 +43,7 @@ H4treeReco::H4treeReco(TChain *tree,JSONWrapper::Object *cfg,TString outUrl) :
   recoT_->Branch("ch",                   ch_,                  "ch[maxch]/F");
   recoT_->Branch("pedestal",             pedestal_,            "pedestal[maxch]/F");
   recoT_->Branch("pedestalRMS",          pedestalRMS_,         "pedestalRMS[maxch]/F");
+  recoT_->Branch("pedestalSlope",        pedestalSlope_,         "pedestalSlope[maxch]/F");
   recoT_->Branch("wave_max",             wave_max_,            "wave_max[maxch]/F");
   recoT_->Branch("wave_max_aft",         wave_max_aft_,        "wave_max_aft[maxch]/F");
   recoT_->Branch("wave_aroundmax",       wave_aroundmax_,      "wave_aroundmax[maxch][50]/F");
@@ -107,7 +108,7 @@ void H4treeReco::FillWaveforms()
     {
       it->second->ClearVectors();
       it->second->GetWaveform()->clear();
-      for(int k=0; k<25; k++) 
+      for(int k=0; k<50; k++) 
 	{
 	  wave_aroundmax_[ictr][k]=-9999;
 	  time_aroundmax_[ictr][k]=-9999;
@@ -152,10 +153,10 @@ void H4treeReco::reconstructWaveform(GroupChannelKey_t key)
   
   //use samples to get pedestal and RMS
   Waveform::baseline_informations wave_pedestal= waveform->baseline(chRec->GetPedestalWindowLo(),
-								    chRec->GetPedestalWindowUp()); 
+								    chRec->GetPedestalWindowUp(),(chRec->GetBaselineSlope()!=0)); 
   
-  //substract the pedestal from the samples
-  waveform->offset(wave_pedestal.pedestal);
+  //substract the pedestal from the samples (slope corrected if slope !=0 slope in ADC/ns)
+  waveform->offset(wave_pedestal.pedestal,chRec->GetBaselineSlope());
   
   //if pedestal is very high, the signal is negative -> invert it
   if(wave_pedestal.pedestal>chRec->GetThrForPulseInversion()) waveform->rescale(-1);	
@@ -188,6 +189,7 @@ void H4treeReco::reconstructWaveform(GroupChannelKey_t key)
   ch_[maxch_]                 = it->first.second;
   pedestal_[maxch_]           = wave_pedestal.pedestal;
   pedestalRMS_[maxch_]        = wave_pedestal.rms;
+  pedestalSlope_[maxch_]        = wave_pedestal.slope;
   wave_max_[maxch_]           = wave_max.max_amplitude;
   wave_max_aft_[maxch_]           = wave_max_aft.max_amplitude; //for studying ringing issues after the samples
   t_max_[maxch_]              = wave_max.time_at_max*1.e9;
