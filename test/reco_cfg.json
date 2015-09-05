@@ -123,7 +123,7 @@
 		"smallChargeWindowSize":5,
 		"largeChargeWindowSize":11,
 		"absoluteTimeDelta":-115.5,
-		"mcpTimeDelta":-5.3,
+		"mcpTimeDelta":-5.1,
 		"thrForTiming":200,
 		"samplesToInterpolateAtMax":5,
 		"samplesToInterpolateForCFD":5,
