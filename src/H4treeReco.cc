@@ -317,8 +317,8 @@ void H4treeReco::reconstructWaveform(GroupChannelKey_t key)
   if (chRec->GetMCPTimeDelta()!=0 && (*it).first != trigger_)
     {
       ROOT::Math::Minimizer* minim;
-      int xFitMin=(int)((t_max_[1]+chRec->GetMCPTimeDelta())/(waveform->_times[1]*1E9))-((chRec->GetLargeChargeWindowsSize()-1)/2);
-      int xFitMax=(int)((t_max_[1]+chRec->GetMCPTimeDelta())/(waveform->_times[1]*1E9))+((chRec->GetLargeChargeWindowsSize()-1)/2);
+      int xFitMin=std::max(0,(int)((t_max_[1]+chRec->GetMCPTimeDelta())/(waveform->_times[1]*1E9))-((chRec->GetLargeChargeWindowsSize()-1)/2));
+      int xFitMax=std::min(1000,(int)((t_max_[1]+chRec->GetMCPTimeDelta())/(waveform->_times[1]*1E9))+((chRec->GetLargeChargeWindowsSize()-1)/2));
       Waveform fitWave=(*waveform);
       fitWave.shift_time(-1*(t_max_[1]/1.E9)); //shift waveform according to the MCPtrigger
       WaveformFit::fitWaveform(&fitWave, waveTemplates_[maxch_], xFitMin, xFitMax, wave_max, wave_pedestal, minim);
