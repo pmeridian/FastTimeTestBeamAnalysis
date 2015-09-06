@@ -48,10 +48,14 @@ H4treeReco::H4treeReco(TChain *tree,JSONWrapper::Object *cfg,TString outUrl) :
   recoT_->Branch("wave_max_aft",         wave_max_aft_,        "wave_max_aft[maxch]/F");
   recoT_->Branch("wave_aroundmax",       wave_aroundmax_,      "wave_aroundmax[maxch][50]/F");
   recoT_->Branch("time_aroundmax",       time_aroundmax_,      "time_aroundmax[maxch][50]/F");
-  recoT_->Branch("wave_fit_ampl",        wave_fit_ampl_,       "wave_fit_ampl[maxch]/F");
-  recoT_->Branch("wave_fit_amplerr",     wave_fit_amplerr_,    "wave_fit_amplerr[maxch]/F");
-  recoT_->Branch("wave_fit_chi2",        wave_fit_chi2_,       "wave_fit_chi2[maxch]/F");
-  recoT_->Branch("wave_fit_ndof",        wave_fit_ndof_,       "wave_fit_ndof[maxch]/F");
+  recoT_->Branch("wave_fit_smallw_ampl",        wave_fit_smallw_ampl_,       "wave_fit_smallw_ampl[maxch]/F");
+  recoT_->Branch("wave_fit_smallw_amplerr",     wave_fit_smallw_amplerr_,    "wave_fit_smallw_amplerr[maxch]/F");
+  recoT_->Branch("wave_fit_smallw_chi2",        wave_fit_smallw_chi2_,       "wave_fit_smallw_chi2[maxch]/F");
+  recoT_->Branch("wave_fit_smallw_ndof",        wave_fit_smallw_ndof_,       "wave_fit_smallw_ndof[maxch]/F");
+  recoT_->Branch("wave_fit_largew_ampl",        wave_fit_largew_ampl_,       "wave_fit_largew_ampl[maxch]/F");
+  recoT_->Branch("wave_fit_largew_amplerr",     wave_fit_largew_amplerr_,    "wave_fit_largew_amplerr[maxch]/F");
+  recoT_->Branch("wave_fit_largew_chi2",        wave_fit_largew_chi2_,       "wave_fit_largew_chi2[maxch]/F");
+  recoT_->Branch("wave_fit_largew_ndof",        wave_fit_largew_ndof_,       "wave_fit_largew_ndof[maxch]/F");
   recoT_->Branch("charge_integ",         charge_integ_,        "charge_integ[maxch]/F");
   recoT_->Branch("charge_integ_max",     charge_integ_max_,    "charge_integ_max[maxch]/F");
   recoT_->Branch("charge_integ_fix",     charge_integ_fix_,    "charge_integ_fix[maxch]/F");
@@ -316,6 +320,7 @@ void H4treeReco::reconstructWaveform(GroupChannelKey_t key)
   //now fit 
   if (chRec->GetMCPTimeDelta()!=0 && (*it).first != trigger_)
     {
+      //Largew fit
       ROOT::Math::Minimizer* minim;
       int xFitMin=std::max(0,(int)((t_max_[1]+chRec->GetMCPTimeDelta())/(waveform->_times[1]*1E9))-((chRec->GetLargeChargeWindowsSize()-1)/2));
       int xFitMax=std::min(1000,(int)((t_max_[1]+chRec->GetMCPTimeDelta())/(waveform->_times[1]*1E9))+((chRec->GetLargeChargeWindowsSize()-1)/2));
@@ -325,17 +330,37 @@ void H4treeReco::reconstructWaveform(GroupChannelKey_t key)
       const double *par=minim->X();
       const double *errors=minim->Errors();
 
-      wave_fit_ampl_[maxch_] = par[0];
-      wave_fit_amplerr_[maxch_] = errors[0];
-      wave_fit_chi2_[maxch_] = minim->MinValue();
-      wave_fit_ndof_[maxch_] = xFitMax - xFitMin +1 -1;
+      wave_fit_largew_ampl_[maxch_] = par[0];
+      wave_fit_largew_amplerr_[maxch_] = errors[0];
+      wave_fit_largew_chi2_[maxch_] = minim->MinValue();
+      wave_fit_largew_ndof_[maxch_] = xFitMax - xFitMin +1 -1;
+      delete minim;
+
+      //Smallw fit
+      ROOT::Math::Minimizer* minim_2;
+      xFitMin=std::max(0,(int)((t_max_[1]+chRec->GetMCPTimeDelta())/(waveform->_times[1]*1E9))-((chRec->GetSmallChargeWindowsSize()-1)/2));
+      xFitMax=std::min(1000,(int)((t_max_[1]+chRec->GetMCPTimeDelta())/(waveform->_times[1]*1E9))+((chRec->GetSmallChargeWindowsSize()-1)/2));
+
+      WaveformFit::fitWaveform(&fitWave, waveTemplates_[maxch_], xFitMin, xFitMax, wave_max, wave_pedestal, minim_2);
+      par=minim_2->X();
+      errors=minim_2->Errors();
+      wave_fit_smallw_ampl_[maxch_] = par[0];
+      wave_fit_smallw_amplerr_[maxch_] = errors[0];
+      wave_fit_smallw_chi2_[maxch_] = minim_2->MinValue();
+      wave_fit_smallw_ndof_[maxch_] = xFitMax - xFitMin +1 -1;
+      delete minim_2;
     }
   else
     {
-      wave_fit_ampl_[maxch_] = -9999;
-      wave_fit_amplerr_[maxch_] = -9999;
-      wave_fit_chi2_[maxch_] = -9999;
-      wave_fit_ndof_[maxch_] = -9999;
+      wave_fit_largew_ampl_[maxch_] = -9999;
+      wave_fit_largew_amplerr_[maxch_] = -9999;
+      wave_fit_largew_chi2_[maxch_] = -9999;
+      wave_fit_largew_ndof_[maxch_] = -9999;
+
+      wave_fit_smallw_ampl_[maxch_] = -9999;
+      wave_fit_smallw_amplerr_[maxch_] = -9999;
+      wave_fit_smallw_chi2_[maxch_] = -9999;
+      wave_fit_smallw_ndof_[maxch_] = -9999;
     }
   maxch_++;
 }
