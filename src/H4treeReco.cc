@@ -193,11 +193,13 @@ void H4treeReco::reconstructWaveform(GroupChannelKey_t key)
   //find max amplitude in search window (5 is the number of samples around max for the interpolation)
   int searchWindowLo=chRec->GetSearchWindowLo();
   int searchWindowUp=chRec->GetSearchWindowUp();
-  if (chRec->GetSearchWindowTriggerRelative() && (*it).first != trigger_)
+  if (chRec->GetSearchWindowTriggerRelative() && (*it).first != trigger_ && chRec->GetMCPTimeDelta()!=0)
     {
       //When this is enabled, trigger should always be reconstructed always as channel 0
-      searchWindowLo+=(int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta())/(waveform->_times[1]*1E9));
-      searchWindowUp+=(int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta())/(waveform->_times[1]*1E9));
+      // searchWindowLo+=(int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta())/(waveform->_times[1]*1E9));
+      // searchWindowUp+=(int)((t_at_threshold_[0]+chRec->GetAbsoluteTimeDelta())/(waveform->_times[1]*1E9));
+      searchWindowLo+=(int)((t_max_[1]+chRec->GetMCPTimeDelta())/(waveform->_times[1]*1E9));
+      searchWindowUp+=(int)((t_max_[1]+chRec->GetMCPTimeDelta())/(waveform->_times[1]*1E9));
     }
 
 #ifdef DEBUG_VERBOSE
