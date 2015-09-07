@@ -9,7 +9,7 @@
 
 #include "fitFunctions.C"
 
-void fitMIP(int ch, int run, float xc, float yc,TString tag)
+void fitMIP(int ch, int run, float xc, float yc,TString tag,TString title)
 {
   gStyle->SetOptTitle(0);
   gStyle->SetOptFit(111111);
@@ -24,6 +24,9 @@ void fitMIP(int ch, int run, float xc, float yc,TString tag)
   TH1F* noise_corrected=(TH1F*)gROOT->FindObject("noise_corrected");
   noise_corrected->Fit("gaus");
   c1->SaveAs(Form("noise_corrected_ch%d_run%d.png",ch,run));
+
+  TLatex t;
+  t.SetTextSize(0.04);
 
   int cha;
   float mcpdelta;
@@ -97,6 +100,7 @@ void fitMIP(int ch, int run, float xc, float yc,TString tag)
   noi->SetLineColor(kMagenta);
   noi->SetLineStyle(2);
   noi->Draw("SAME");
+  t.DrawLatexNDC(0.07,0.92,title);
   c1->SaveAs(Form("MIP_ch%d_run%d_%s.png",ch,run,tag.Data())); 
 
 }

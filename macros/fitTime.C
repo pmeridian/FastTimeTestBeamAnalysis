@@ -23,6 +23,7 @@ void fitTime(float deltaT1,float deltaT2, float MIPcalib, float MIPcut, TString 
   // c->Add("root://eoscms///eos/cms/store/caf/user/meridian/test/RECO_3355.root");
   // c->Add("root://eoscms///eos/cms/store/caf/user/meridian/test/RECO_3356.root");
   c->Add("root://eoscms///eos/cms/store/caf/user/meridian/test/RECO_3367.root");
+  //  c->Add("root://eoscms///eos/cms/store/caf/user/meridian/test/RECO_3358.root");
 
   c->Draw(Form("(t_max_frac50[2]-t_max_frac50[1]+%4.3f)>>h1(100,-0.2,0.2)",deltaT1),Form("wave_max[1]>200 && wave_fit_smallw_ampl[2]>%3.1f*%3.1f",MIPcalib,MIPcut));
   c->Draw(Form("(t_max_frac50[3]-t_max_frac50[1]+%4.3f)>>h2(100,-0.2,0.2)",deltaT2),Form("wave_max[1]>200 && wave_fit_smallw_ampl[3]>%3.1f*%3.1f",MIPcalib,MIPcut));
@@ -64,8 +65,6 @@ void fitTime(float deltaT1,float deltaT2, float MIPcalib, float MIPcut, TString 
   h3->GetXaxis()->SetTitle("#Delta_{t} Si_{1} - Si_{2} (ns)");
   h3->SetLineColor(kBlack);  
   h3->Fit("gaus");
-  t.DrawLatexNDC(0.07,0.92,"e- 50 GeV Si 320#mum p-type. 4 X_{0} lead");
-  t.DrawLatexNDC(0.16,0.8,"Amplitude > 20 MIP");
   t.DrawLatexNDC(0.07,0.92,title);
   t.DrawLatexNDC(0.16,0.8,Form("Amplitude > %2.0f MIP",MIPcut));
   c1->SaveAs(Form("DeltaT_ch%d_ch%d_%s.png",2,3,tag.Data()));
